@@ -1,25 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { getCareerPaths } from "./data";
-import type { CareerCategory, DecisionStage } from "./types";
+import type { CareerCategory } from "./types";
 import type { SupportedLanguage } from "../../onboarding/components/types";
 import { CareerCard } from "./career-card";
 import { CompareDialog } from "./compare-dialog";
-import { DecisionProgress } from "./decision-progress";
 import { LanguageSelector } from "../../onboarding/components/language-selector";
 import { SaathiHelpSheet } from "../../onboarding/components/saathi-help-sheet";
-import { Sparkles, Users, MessageSquare, Search, X, SlidersHorizontal } from "lucide-react";
+import { getSelectedCareerId, setSelectedCareerId, getSelectedCareer } from "@/lib/career-store";
+import { Sparkles, Users, FileText, Search, X, SlidersHorizontal, CheckCircle2, ArrowRight } from "lucide-react";
 
 export function MyPathWorkspace() {
   const [language, setLanguage] = useState<SupportedLanguage>("en");
+  const [selectedCareerId, setCareerIdState] = useState<string>("electrician");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<CareerCategory>("all");
   const [compareIds, setCompareIds] = useState<string[]>(["electrician", "auto_technician"]);
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [isSaathiOpen, setIsSaathiOpen] = useState(false);
-  const [decisionStage] = useState<DecisionStage>("comparing");
+
+  useEffect(() => {
+    setCareerIdState(getSelectedCareerId());
+  }, []);
+
+  function handleSelectCareer(id: string) {
+    setSelectedCareerId(id);
+    setCareerIdState(id);
+  }
 
   const categories: { id: CareerCategory; labelEn: string; labelHi: string; icon: string }[] = [
     { id: "all", labelEn: "All Trades", labelHi: "सभी काम", icon: "✨" },
@@ -32,6 +41,7 @@ export function MyPathWorkspace() {
   ];
 
   const allCareerPaths = getCareerPaths(language);
+  const currentActiveCareer = getSelectedCareer(language);
 
   // Filter paths based on search keyword and category
   const filteredPaths = allCareerPaths.filter((path) => {
@@ -73,7 +83,7 @@ export function MyPathWorkspace() {
           </span>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
             {language === "hi"
-              ? "आपके लिए सर्वश्रेष्ठ वोकेशनल रास्ते"
+              ? "आपके लिए वोकेशनल विकल्प"
               : "Recommended Vocational Career Paths"}
           </h1>
         </div>
@@ -86,8 +96,45 @@ export function MyPathWorkspace() {
         </div>
       </header>
 
-      {/* Decision stage tracker */}
-      <DecisionProgress currentStage={decisionStage} language={language} />
+      {/* Selected Career Quick Action Banner */}
+      {currentActiveCareer && (
+        <div className="bg-emerald-50 border border-emerald-300/80 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
+              <CheckCircle2 className="h-5 w-5" />
+            </div>
+            <div>
+              <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">
+                {language === "hi" ? "आपका चुना हुआ करियर" : "Your Selected Career"}
+              </span>
+              <h3 className="font-bold text-base text-emerald-950">
+                {currentActiveCareer.title}
+              </h3>
+              <p className="text-xs text-emerald-800">
+                {currentActiveCareer.startingPay} · {currentActiveCareer.duration}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto pt-1 sm:pt-0">
+            <Link
+              href="/family"
+              className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-xs"
+            >
+              <Users className="h-3.5 w-3.5" />
+              <span>{language === "hi" ? "परिवार को दिखाएं" : "Show to Parents"}</span>
+            </Link>
+
+            <Link
+              href="/applications"
+              className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-white border border-emerald-300 text-emerald-900 hover:bg-emerald-100 text-xs font-bold flex items-center justify-center gap-1.5 transition"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              <span>{language === "hi" ? "दस्तावेज चेकलिस्ट" : "Docs Checklist"}</span>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Search and Category Filter Bar */}
       <div className="space-y-3 bg-card border rounded-2xl p-4 shadow-xs">
@@ -169,7 +216,9 @@ export function MyPathWorkspace() {
               key={path.id}
               path={path}
               language={language}
+              isSelected={path.id === selectedCareerId}
               isSelectedForCompare={compareIds.includes(path.id)}
+              onSelectCareer={handleSelectCareer}
               onToggleCompare={toggleCompare}
               onAskSaathi={handleAskSaathi}
             />
@@ -213,79 +262,6 @@ export function MyPathWorkspace() {
           </div>
         </div>
       )}
-
-      {/* "Not satisfied with recommendations?" Help Card */}
-      <div className="bg-gradient-to-r from-primary/5 via-muted/30 to-primary/5 border rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="space-y-1 text-center sm:text-left">
-          <h4 className="text-sm font-bold text-foreground flex items-center justify-center sm:justify-start gap-1.5">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <span>
-              {language === "hi"
-                ? "क्या आप कुछ और अलग ढूंढ रहे हैं?"
-                : "Looking for something different?"}
-            </span>
-          </h4>
-          <p className="text-xs text-muted-foreground">
-            {language === "hi"
-              ? "साथी से कहें कि वह आपकी रुचि और शिक्षा के आधार पर नए विकल्प खोजे।"
-              : "Tell Saathi your preferred work style to get custom suggestions."}
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setIsSaathiOpen(true)}
-          className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shrink-0 hover:bg-primary/90 transition shadow-xs"
-        >
-          {language === "hi" ? "साथी से नई सलाह लें" : "Get Custom Suggestion"}
-        </button>
-      </div>
-
-      {/* Family & Counselling quick bar */}
-      <div className="bg-muted/30 border rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
-            <Users className="h-5 w-5" />
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-foreground">
-              {language === "hi"
-                ? "माता-पिता और परिवार के साथ साझा करें"
-                : "Discuss with Family on WhatsApp / SMS"}
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              {language === "hi"
-                ? "सरल भाषा में कमाई, सुरक्षा और फीस का ब्यौरा भेजें।"
-                : "Send a clean, jargon-free summary card tailored for parents."}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Link
-            href="/family"
-            className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-border bg-background hover:bg-muted text-xs font-semibold text-center flex items-center justify-center gap-1.5 transition"
-          >
-            <Users className="h-3.5 w-3.5 text-primary" />
-            <span>{language === "hi" ? "परिवार पोर्टल" : "Family Portal"}</span>
-          </Link>
-          <Link
-            href="/counselling"
-            className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-border bg-background hover:bg-muted text-xs font-semibold text-center flex items-center justify-center gap-1.5 transition"
-          >
-            <MessageSquare className="h-3.5 w-3.5" />
-            <span>{language === "hi" ? "साथी काउंसलर" : "Saathi AI"}</span>
-          </Link>
-          <button
-            type="button"
-            onClick={() => setIsSaathiOpen(true)}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold text-center flex items-center justify-center gap-1.5 transition"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>{language === "hi" ? "सलाह लें" : "Get Advice"}</span>
-          </button>
-        </div>
-      </div>
 
       {/* Side-by-side modal */}
       <CompareDialog

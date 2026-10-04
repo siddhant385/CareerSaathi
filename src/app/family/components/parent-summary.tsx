@@ -9,9 +9,10 @@ interface ParentSummaryProps {
   metrics: ParentSummaryMetric[];
   concerns: ParentConcern[];
   language: SupportedLanguage;
+  careerTitle?: string;
 }
 
-export function ParentSummary({ metrics, concerns, language }: ParentSummaryProps) {
+export function ParentSummary({ metrics, concerns, language, careerTitle }: ParentSummaryProps) {
   const [openConcernId, setOpenConcernId] = useState<string | null>(concerns[0]?.id || null);
   const [copied, setCopied] = useState(false);
 
@@ -25,10 +26,11 @@ export function ParentSummary({ metrics, concerns, language }: ParentSummaryProp
   }
 
   function handleShareWhatsApp() {
+    const title = careerTitle || "इलेक्ट्रीशियन एवं सोलर तकनीशियन";
     const text =
       language === "hi"
-        ? "करियर साथी - माता-पिता के लिए वोकेशनल कोर्स सारांश:\n• कोर्स: इलेक्ट्रीशियन एवं सोलर तकनीशियन\n• सरकारी फीस: ₹1,500\n• शुरुआती वेतन: ₹14,000 - ₹20,000/माह\n• नजदीकी केंद्र: राजकीय आईटीआई (8 किमी दूर)\nपूरा ब्यौरा देखें और काउंसलर से बात करें:"
-        : "CareerSaathi - Vocational Course Summary for Parents:\n• Course: Electrician & Solar Technician\n• Govt Fee: ₹1,500\n• Starting Pay: ₹14,000 - ₹20,000/mo\n• Nearest Center: Govt ITI (8 km away)\nView full details & connect with counsellor:";
+        ? `करियर साथी - माता-पिता के लिए वोकेशनल कोर्स सारांश:\n• कोर्स: ${title}\n• पूरा ब्यौरा देखें और फीस/कमाई की जांच करें:`
+        : `CareerSaathi - Vocational Course Summary for Parents:\n• Course: ${title}\n• View verified details on fees and earnings:`;
     const url = `https://wa.me/?text=${encodeURIComponent(`${text} https://careersaathi.in/family`)}`;
     if (typeof window !== "undefined") {
       window.open(url, "_blank");
@@ -58,8 +60,8 @@ export function ParentSummary({ metrics, concerns, language }: ParentSummaryProp
                 onClick={() =>
                   handleListen(
                     language === "hi"
-                      ? "इलेक्ट्रीशियन और सोलर तकनीशियन कोर्स। कुल सरकारी खर्च केवल पंद्रह सौ रुपये है, और शुरुआती मासिक वेतन चौदह से बीस हजार रुपये तक है। नजदीकी राजकीय आईटीआई आठ किलोमीटर दूर है।"
-                      : "Electrician and Solar Technician Course. Total government fee is 1500 rupees, and starting monthly pay is 14000 to 20000 rupees. Nearest government ITI is 8 kilometers away."
+                      ? `${careerTitle || "चुना गया कोर्स"}। यहाँ फीस, कमाई और सुरक्षा की पूरी जानकारी दी गई है।`
+                      : `${careerTitle || "Selected course"}. Here are all the verified facts regarding fees, earnings, and safety.`
                   )
                 }
                 className="inline-flex items-center gap-1 text-[11px] text-primary font-semibold hover:underline"
@@ -69,9 +71,7 @@ export function ParentSummary({ metrics, concerns, language }: ParentSummaryProp
               </button>
             </div>
             <h3 className="font-bold text-base sm:text-lg text-foreground mt-1.5">
-              {language === "hi"
-                ? "इलेक्ट्रीशियन और सोलर तकनीशियन (राजकीय आईटीआई)"
-                : "Electrician & Solar Technician (Govt ITI)"}
+              {careerTitle || (language === "hi" ? "इलेक्ट्रीशियन और सोलर तकनीशियन" : "Electrician & Solar Technician")}
             </h3>
           </div>
 

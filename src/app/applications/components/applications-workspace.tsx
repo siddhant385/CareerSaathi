@@ -1,22 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { initialDocuments, admissionTimeline } from "./data";
 import type { SupportedLanguage } from "../../onboarding/components/types";
 import { LanguageSelector } from "../../onboarding/components/language-selector";
+import { getSelectedCareer } from "@/lib/career-store";
+import type { CareerPath } from "../../my-path/components/types";
 import {
   FileCheck2,
   Calendar,
   Sparkles,
   Upload,
   ArrowRight,
+  CheckCircle2,
+  Users,
 } from "lucide-react";
 
 export function ApplicationsWorkspace() {
   const [language, setLanguage] = useState<SupportedLanguage>("en");
   const [documents, setDocuments] = useState(initialDocuments);
   const [uploadedMsg, setUploadedMsg] = useState<string | null>(null);
+  const [activeCareer, setActiveCareer] = useState<CareerPath | null>(null);
+
+  useEffect(() => {
+    setActiveCareer(getSelectedCareer(language));
+    const handleCareerChange = () => {
+      setActiveCareer(getSelectedCareer(language));
+    };
+    window.addEventListener("careersaathi_career_changed", handleCareerChange);
+    return () => window.removeEventListener("careersaathi_career_changed", handleCareerChange);
+  }, [language]);
+
+  const career = activeCareer || getSelectedCareer(language);
 
   function handleToggleDoc(id: string) {
     setDocuments((prev) =>
@@ -66,6 +82,38 @@ export function ApplicationsWorkspace() {
         </div>
       </header>
 
+      {/* Selected Career Card Banner */}
+      <div className="bg-emerald-50 border border-emerald-300 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+          <div>
+            <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">
+              {language === "hi" ? "दाखिला हेतु चुना गया कोर्स" : "Admission Target Trade"}
+            </span>
+            <h2 className="font-bold text-base text-emerald-950">{career.title}</h2>
+            <p className="text-xs text-emerald-800">
+              {career.nearestCenter} · {career.totalCost} · {career.duration}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Link
+            href="/my-path"
+            className="px-3 py-1.5 rounded-xl border border-emerald-300 bg-white text-emerald-900 text-xs font-bold hover:bg-emerald-100 transition"
+          >
+            {language === "hi" ? "कोर्स बदलें" : "Change Trade"}
+          </Link>
+          <Link
+            href="/family"
+            className="px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1 transition shadow-xs"
+          >
+            <Users className="h-3.5 w-3.5" />
+            <span>{language === "hi" ? "परिवार सहमति" : "Family Portal"}</span>
+          </Link>
+        </div>
+      </div>
+
       {/* Progress banner */}
       <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="space-y-0.5 text-center sm:text-left">
@@ -77,7 +125,7 @@ export function ApplicationsWorkspace() {
           <p className="text-xs text-muted-foreground">
             {language === "hi"
               ? "संस्थान जाने से पहले सभी फोटो और अंकतालिका की जांच कर लें।"
-              : "Keep these verified before visiting the government ITI institute."}
+              : "Keep these verified before visiting the government institute."}
           </p>
         </div>
 

@@ -1,11 +1,13 @@
 import type { CareerPath } from "./types";
 import type { SupportedLanguage } from "../../onboarding/components/types";
-import { BadgeCheck, Sparkles, MapPin, IndianRupee, Clock, Volume2 } from "lucide-react";
+import { BadgeCheck, Sparkles, MapPin, IndianRupee, Clock, Volume2, CheckCircle2 } from "lucide-react";
 
 interface CareerCardProps {
   path: CareerPath;
   language: SupportedLanguage;
+  isSelected: boolean;
   isSelectedForCompare: boolean;
+  onSelectCareer: (id: string) => void;
   onToggleCompare: (id: string) => void;
   onAskSaathi: (path: CareerPath) => void;
 }
@@ -13,7 +15,9 @@ interface CareerCardProps {
 export function CareerCard({
   path,
   language,
+  isSelected,
   isSelectedForCompare,
+  onSelectCareer,
   onToggleCompare,
   onAskSaathi,
 }: CareerCardProps) {
@@ -28,20 +32,35 @@ export function CareerCard({
   }
 
   return (
-    <div className="bg-card border rounded-2xl p-5 shadow-xs space-y-4 flex flex-col justify-between hover:border-primary/40 transition">
+    <div
+      className={`bg-card border rounded-2xl p-5 shadow-xs space-y-4 flex flex-col justify-between transition-all ${
+        isSelected
+          ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/10"
+          : "hover:border-primary/40"
+      }`}
+    >
       <div className="space-y-3">
         {/* Top match score and evidence badge */}
         <div className="flex items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
-            <Sparkles className="h-3.5 w-3.5" />
-            {path.matchScore}% {language === "hi" ? "सुझाव मेल" : "Match"}
-          </span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
+              <Sparkles className="h-3.5 w-3.5" />
+              {path.matchScore}% {language === "hi" ? "सुझाव मेल" : "Match"}
+            </span>
 
-          <div className="flex items-center gap-2">
+            {isSelected && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full">
+                <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                {language === "hi" ? "चुना हुआ रास्ता ✓" : "Selected Path ✓"}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5">
             {path.evidenceLevel === "verified" && (
               <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
                 <BadgeCheck className="h-3 w-3" />
-                {language === "hi" ? "सत्यापित डेटा" : "Verified Data"}
+                {language === "hi" ? "सत्यापित" : "Verified"}
               </span>
             )}
             <button
@@ -102,34 +121,57 @@ export function CareerCard({
         </p>
       </div>
 
-      {/* Action buttons */}
-      <div className="pt-3 border-t flex items-center justify-between gap-2">
+      {/* Primary Selection & Action Buttons */}
+      <div className="pt-3 border-t space-y-2">
         <button
           type="button"
-          onClick={() => onToggleCompare(path.id)}
-          className={`px-3 py-2 rounded-xl text-xs font-semibold border transition ${
-            isSelectedForCompare
-              ? "bg-primary text-primary-foreground border-primary"
-              : "bg-background text-foreground border-border hover:bg-muted/40"
+          onClick={() => onSelectCareer(path.id)}
+          className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-xs ${
+            isSelected
+              ? "bg-emerald-600 text-white hover:bg-emerald-700"
+              : "bg-primary text-primary-foreground hover:bg-primary/90"
           }`}
         >
-          {isSelectedForCompare
-            ? language === "hi"
-              ? "तुलना में चुना गया ✓"
-              : "Comparing ✓"
-            : language === "hi"
-            ? "+ तुलना करें"
-            : "+ Compare"}
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          <span>
+            {isSelected
+              ? language === "hi"
+                ? "यह आपका चुना हुआ करियर है ✓"
+                : "Active Career Choice ✓"
+              : language === "hi"
+              ? "⭐ इसे अपना करियर चुनें"
+              : "⭐ Select as My Career"}
+          </span>
         </button>
 
-        <button
-          type="button"
-          onClick={() => onAskSaathi(path)}
-          className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition flex items-center gap-1.5"
-        >
-          <Sparkles className="h-3.5 w-3.5" />
-          <span>{language === "hi" ? "साथी से पूछें" : "Ask Saathi"}</span>
-        </button>
+        <div className="flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => onToggleCompare(path.id)}
+            className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-semibold border transition ${
+              isSelectedForCompare
+                ? "bg-muted border-primary text-primary font-bold"
+                : "bg-background text-foreground border-border hover:bg-muted/40"
+            }`}
+          >
+            {isSelectedForCompare
+              ? language === "hi"
+                ? "तुलना में शामिल ✓"
+                : "Comparing ✓"
+              : language === "hi"
+              ? "+ तुलना करें"
+              : "+ Compare"}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onAskSaathi(path)}
+            className="py-1.5 px-3 rounded-xl text-xs font-semibold bg-muted/60 text-foreground hover:bg-muted transition flex items-center gap-1"
+          >
+            <Sparkles className="h-3 w-3 text-primary" />
+            <span>{language === "hi" ? "साथी से पूछें" : "Ask Saathi"}</span>
+          </button>
+        </div>
       </div>
     </div>
   );

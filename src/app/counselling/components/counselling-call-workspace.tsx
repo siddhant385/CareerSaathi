@@ -3,10 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { VRMScene } from "./vrm-scene";
-import { sampleDialogues } from "./data";
+import { getCareerDialogues } from "./data";
 import { GenerativeWidget } from "./generative-widget";
 import type { SupportedLanguage } from "../../onboarding/components/types";
 import { LanguageSelector } from "../../onboarding/components/language-selector";
+import { getSelectedCareer } from "@/lib/career-store";
+import type { CareerPath } from "@/app/my-path/components/types";
 import {
   Mic,
   MicOff,
@@ -25,12 +27,24 @@ export function CounsellingCallWorkspace() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [language, setLanguage] = useState<SupportedLanguage>("en");
+  const [activeCareer, setActiveCareer] = useState<CareerPath | null>(null);
   const [activeDialogueIndex, setActiveDialogueIndex] = useState(0);
   const [isMicActive, setIsMicActive] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [callDuration, setCallDuration] = useState(12);
 
-  const activeDialogue = sampleDialogues[activeDialogueIndex];
+  useEffect(() => {
+    setActiveCareer(getSelectedCareer(language));
+    const handleCareerChange = () => {
+      setActiveCareer(getSelectedCareer(language));
+    };
+    window.addEventListener("careersaathi_career_changed", handleCareerChange);
+    return () => window.removeEventListener("careersaathi_career_changed", handleCareerChange);
+  }, [language]);
+
+  const career = activeCareer || getSelectedCareer(language);
+  const dialogues = getCareerDialogues(career, language);
+  const activeDialogue = dialogues[activeDialogueIndex] || dialogues[0];
 
   // Call timer effect
   useEffect(() => {
@@ -76,12 +90,12 @@ export function CounsellingCallWorkspace() {
   const quickPrompts =
     language === "hi"
       ? [
-          { text: "💰 फीस और स्कॉलरशिप कितनी है?", idx: 0 },
-          { text: "🚌 पास का कॉलेज कितनी दूर है?", idx: 1 },
+          { text: `💰 ${career.title} की फीस और वेतन?`, idx: 0 },
+          { text: "🚌 पास का कॉलेज और दूरी?", idx: 1 },
           { text: "👨‍👩‍👦 परिवार को कैसे समझाएं?", idx: 2 },
         ]
       : [
-          { text: "💰 What is the course fee & scholarship?", idx: 0 },
+          { text: `💰 Fees & Pay for ${career.title}?`, idx: 0 },
           { text: "🚌 Where is the nearest center?", idx: 1 },
           { text: "👨‍👩‍👦 How to explain to my parents?", idx: 2 },
         ];
@@ -233,7 +247,7 @@ export function CounsellingCallWorkspace() {
           <button
             type="button"
             onClick={() =>
-              setActiveDialogueIndex((prev) => (prev + 1) % sampleDialogues.length)
+              setActiveDialogueIndex((prev) => (prev + 1) % dialogues.length)
             }
             className="p-3 rounded-full bg-neutral-900/90 border border-neutral-700 text-white hover:bg-neutral-800 transition"
             title="Next Step in Advice"
@@ -243,7 +257,7 @@ export function CounsellingCallWorkspace() {
 
           {/* Human Senior Counsellor Escalation */}
           <Link
-            href="/my-path"
+            href="/family"
             className="p-3 rounded-full bg-neutral-900/90 border border-neutral-700 text-neutral-300 hover:text-white hover:bg-neutral-800 transition"
             title="Talk to Senior Human Counsellor"
           >
