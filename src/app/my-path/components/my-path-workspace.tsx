@@ -263,6 +263,13 @@ export function MyPathWorkspace() {
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Link
+            href="/family"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-border bg-background hover:bg-muted text-xs font-semibold text-center flex items-center justify-center gap-1.5 transition"
+          >
+            <Users className="h-3.5 w-3.5 text-primary" />
+            <span>{language === "hi" ? "परिवार पोर्टल" : "Family Portal"}</span>
+          </Link>
+          <Link
             href="/counselling"
             className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-border bg-background hover:bg-muted text-xs font-semibold text-center flex items-center justify-center gap-1.5 transition"
           >
