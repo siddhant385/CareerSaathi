@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { getAllTrades, type ExtendedTrade } from "./data";
 import type { CareerCategory } from "../../my-path/components/types";
 import type { SupportedLanguage } from "../../onboarding/components/types";
@@ -20,14 +20,15 @@ import {
   IndianRupee,
   Clock,
   MapPin,
-  ShieldCheck,
-  ArrowRight,
   TrendingUp,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+
+const TRADES_PER_PAGE = 6;
 
 function ExploreContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const initialQuery = searchParams.get("q") || "";
   const initialCategory = (searchParams.get("category") as CareerCategory) || "all";
 
@@ -36,7 +37,10 @@ function ExploreContent() {
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedCategory, setSelectedCategory] = useState<CareerCategory>(initialCategory);
   const [selectedQualification, setSelectedQualification] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [selectedSuccessToast, setSelectedSuccessToast] = useState<string | null>(null);
+
+  const gridTopRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLanguage(getStoredLanguage());
@@ -62,6 +66,11 @@ function ExploreContent() {
     if (cat) setSelectedCategory(cat);
   }, [searchParams]);
 
+  // Reset to page 1 whenever filters or search query change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, selectedQualification]);
+
   function handleSelectTrade(trade: ExtendedTrade) {
     setSelectedCareerId(trade.id);
     setCareerIdState(trade.id);
@@ -83,6 +92,13 @@ function ExploreContent() {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = language === "hi" ? "hi-IN" : "en-IN";
       window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  function handlePageChange(newPage: number) {
+    setCurrentPage(newPage);
+    if (gridTopRef.current) {
+      gridTopRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }
 
@@ -125,6 +141,10 @@ function ExploreContent() {
 
     return matchesCategory && matchesQual && matchesQuery;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredTrades.length / TRADES_PER_PAGE));
+  const startIndex = (currentPage - 1) * TRADES_PER_PAGE;
+  const paginatedTrades = filteredTrades.slice(startIndex, startIndex + TRADES_PER_PAGE);
 
   return (
     <div className="min-h-screen flex flex-col justify-between max-w-5xl mx-auto px-4 py-6 space-y-6">
@@ -257,12 +277,12 @@ function ExploreContent() {
         </div>
       </div>
 
-      {/* Results Count Banner */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+      {/* Results Count and Page Info Banner */}
+      <div ref={gridTopRef} className="flex items-center justify-between text-xs text-muted-foreground px-1">
         <span>
           {language === "hi"
-            ? `${filteredTrades.length} वोकेशनल ट्रेड्स उपलब्ध`
-            : `Showing ${filteredTrades.length} vocational trades`}
+            ? `${filteredTrades.length} ट्रेड्स उपलब्ध (पृष्ठ ${currentPage} / ${totalPages})`
+            : `Showing ${startIndex + 1}–${Math.min(startIndex + TRADES_PER_PAGE, filteredTrades.length)} of ${filteredTrades.length} trades (Page ${currentPage} of ${totalPages})`}
         </span>
         {(searchQuery || selectedCategory !== "all" || selectedQualification !== "all") && (
           <button
@@ -280,168 +300,216 @@ function ExploreContent() {
       </div>
 
       {/* Trade Directory Grid */}
-      {filteredTrades.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredTrades.map((trade) => {
-            const isSelected = trade.id === selectedCareerId;
+      {paginatedTrades.length > 0 ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {paginatedTrades.map((trade) => {
+              const isSelected = trade.id === selectedCareerId;
 
-            return (
-              <div
-                key={trade.id}
-                className={`bg-card border rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4 transition ${
-                  isSelected
-                    ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/10"
-                    : "hover:border-primary/40"
-                }`}
+              return (
+                <div
+                  key={trade.id}
+                  className={`bg-card border rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4 transition ${
+                    isSelected
+                      ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/10"
+                      : "hover:border-primary/40"
+                  }`}
+                >
+                  <div className="space-y-3">
+                    {/* Top Header Badge */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                          {language === "hi" ? trade.eligibilityHi : trade.eligibilityEn}
+                        </span>
+                        {isSelected && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full">
+                            <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                            {language === "hi" ? "सक्रिय रास्ता ✓" : "Active Choice ✓"}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        {trade.evidenceLevel === "verified" && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full">
+                            <BadgeCheck className="h-3 w-3" />
+                            <span>{language === "hi" ? "NCVT मान्य" : "NCVT"}</span>
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleListen(trade)}
+                          className="p-1.5 rounded-full text-muted-foreground hover:text-primary transition cursor-pointer"
+                          title="Listen Audio"
+                        >
+                          <Volume2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Title & Duration */}
+                    <div>
+                      <h3 className="font-bold text-base text-foreground leading-snug">
+                        {trade.title}
+                      </h3>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3 text-primary" />
+                          <span>{trade.duration}</span>
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3 text-primary" />
+                          <span>{language === "hi" ? trade.centerTypeHi : trade.centerTypeEn}</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Pricing Comparison (Govt Subsidized vs Private) */}
+                    <div className="bg-muted/30 border rounded-xl p-2.5 space-y-1.5 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] text-muted-foreground font-medium">
+                          {language === "hi" ? "सरकारी संस्थान फीस:" : "Govt ITI Fee:"}
+                        </span>
+                        <span className="font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-md">
+                          {trade.govtFee}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                        <span>{language === "hi" ? "निजी (प्राइवेट) फीस:" : "Private Fee:"}</span>
+                        <span className="line-through">{trade.privateFee}</span>
+                      </div>
+                    </div>
+
+                    {/* Salary & Growth */}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="p-2 rounded-xl bg-muted/20 border space-y-0.5">
+                        <span className="text-[10px] text-muted-foreground flex items-center gap-0.5 font-medium">
+                          <IndianRupee className="h-3 w-3" />
+                          <span>{language === "hi" ? "शुरुआती वेतन" : "Starting Pay"}</span>
+                        </span>
+                        <span className="font-bold text-foreground text-[11px] block truncate">
+                          {trade.startingPay}
+                        </span>
+                      </div>
+
+                      <div className="p-2 rounded-xl bg-muted/20 border space-y-0.5">
+                        <span className="text-[10px] text-muted-foreground flex items-center gap-0.5 font-medium">
+                          <TrendingUp className="h-3 w-3" />
+                          <span>{language === "hi" ? "2-वर्ष वृद्धि" : "2-Yr Growth"}</span>
+                        </span>
+                        <span className="font-bold text-foreground text-[11px] block truncate">
+                          {trade.payGrowth}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Trade Description */}
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {language === "hi" ? trade.descriptionHi : trade.descriptionEn}
+                    </p>
+
+                    {/* Skills tags */}
+                    <div className="flex flex-wrap gap-1 pt-0.5">
+                      {trade.keySkills.map((skill, sIdx) => (
+                        <span
+                          key={sIdx}
+                          className="text-[10px] px-2 py-0.5 rounded-md bg-muted text-muted-foreground font-medium"
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Card Actions */}
+                  <div className="pt-3 border-t space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSelectTrade(trade)}
+                      className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-xs cursor-pointer ${
+                        isSelected
+                          ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                          : "bg-primary text-primary-foreground hover:bg-primary/90"
+                      }`}
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      <span>
+                        {isSelected
+                          ? language === "hi"
+                            ? "यह आपका चुना हुआ करियर है ✓"
+                            : "Active Career Choice ✓"
+                          : language === "hi"
+                          ? "⭐ इसे अपना करियर चुनें"
+                          : "⭐ Select as My Career"}
+                      </span>
+                    </button>
+
+                    <div className="flex items-center justify-between gap-2 text-xs">
+                      <Link
+                        href="/family"
+                        className="flex-1 py-1.5 px-2 rounded-xl border border-border text-center text-[11px] font-semibold hover:bg-muted text-foreground transition"
+                      >
+                        {language === "hi" ? "परिवार सारांश" : "Family Portal"}
+                      </Link>
+                      <Link
+                        href="/applications"
+                        className="flex-1 py-1.5 px-2 rounded-xl border border-border text-center text-[11px] font-semibold hover:bg-muted text-foreground transition"
+                      >
+                        {language === "hi" ? "दाखिला ब्यौरा" : "Apply Details"}
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Numbered Pagination Bar */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-4 border-t">
+              <button
+                type="button"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-3.5 py-2 rounded-xl border border-border bg-card hover:bg-muted text-foreground font-semibold text-xs flex items-center gap-1 transition disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
               >
-                <div className="space-y-3">
-                  {/* Top Header Badge */}
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                        {language === "hi" ? trade.eligibilityHi : trade.eligibilityEn}
-                      </span>
-                      {isSelected && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full">
-                          <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                          {language === "hi" ? "सक्रिय रास्ता ✓" : "Active Choice ✓"}
-                        </span>
-                      )}
-                    </div>
+                <ChevronLeft className="h-4 w-4" />
+                <span>{language === "hi" ? "पिछला" : "Previous"}</span>
+              </button>
 
-                    <div className="flex items-center gap-1">
-                      {trade.evidenceLevel === "verified" && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full">
-                          <BadgeCheck className="h-3 w-3" />
-                          <span>{language === "hi" ? "NCVT मान्य" : "NCVT"}</span>
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => handleListen(trade)}
-                        className="p-1.5 rounded-full text-muted-foreground hover:text-primary transition cursor-pointer"
-                        title="Listen Audio"
-                      >
-                        <Volume2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Title & Duration */}
-                  <div>
-                    <h3 className="font-bold text-base text-foreground leading-snug">
-                      {trade.title}
-                    </h3>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3 text-primary" />
-                        <span>{trade.duration}</span>
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3 text-primary" />
-                        <span>{language === "hi" ? trade.centerTypeHi : trade.centerTypeEn}</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Pricing Comparison (Govt Subsidized vs Private) */}
-                  <div className="bg-muted/30 border rounded-xl p-2.5 space-y-1.5 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] text-muted-foreground font-medium">
-                        {language === "hi" ? "सरकारी संस्थान फीस:" : "Govt ITI Fee:"}
-                      </span>
-                      <span className="font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-md">
-                        {trade.govtFee}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                      <span>{language === "hi" ? "निजी (प्राइवेट) फीस:" : "Private Fee:"}</span>
-                      <span className="line-through">{trade.privateFee}</span>
-                    </div>
-                  </div>
-
-                  {/* Salary & Growth */}
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="p-2 rounded-xl bg-muted/20 border space-y-0.5">
-                      <span className="text-[10px] text-muted-foreground flex items-center gap-0.5 font-medium">
-                        <IndianRupee className="h-3 w-3" />
-                        <span>{language === "hi" ? "शुरुआती वेतन" : "Starting Pay"}</span>
-                      </span>
-                      <span className="font-bold text-foreground text-[11px] block truncate">
-                        {trade.startingPay}
-                      </span>
-                    </div>
-
-                    <div className="p-2 rounded-xl bg-muted/20 border space-y-0.5">
-                      <span className="text-[10px] text-muted-foreground flex items-center gap-0.5 font-medium">
-                        <TrendingUp className="h-3 w-3" />
-                        <span>{language === "hi" ? "2-वर्ष वृद्धि" : "2-Yr Growth"}</span>
-                      </span>
-                      <span className="font-bold text-foreground text-[11px] block truncate">
-                        {trade.payGrowth}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Trade Description */}
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {language === "hi" ? trade.descriptionHi : trade.descriptionEn}
-                  </p>
-
-                  {/* Skills tags */}
-                  <div className="flex flex-wrap gap-1 pt-0.5">
-                    {trade.keySkills.map((skill, sIdx) => (
-                      <span
-                        key={sIdx}
-                        className="text-[10px] px-2 py-0.5 rounded-md bg-muted text-muted-foreground font-medium"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Card Actions */}
-                <div className="pt-3 border-t space-y-2">
-                  <button
-                    type="button"
-                    onClick={() => handleSelectTrade(trade)}
-                    className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-xs cursor-pointer ${
-                      isSelected
-                        ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                        : "bg-primary text-primary-foreground hover:bg-primary/90"
-                    }`}
-                  >
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    <span>
-                      {isSelected
-                        ? language === "hi"
-                          ? "यह आपका चुना हुआ करियर है ✓"
-                          : "Active Career Choice ✓"
-                        : language === "hi"
-                        ? "⭐ इसे अपना करियर चुनें"
-                        : "⭐ Select as My Career"}
-                    </span>
-                  </button>
-
-                  <div className="flex items-center justify-between gap-2 text-xs">
-                    <Link
-                      href="/family"
-                      className="flex-1 py-1.5 px-2 rounded-xl border border-border text-center text-[11px] font-semibold hover:bg-muted text-foreground transition"
+              <div className="flex items-center gap-1.5">
+                {[...Array(totalPages)].map((_, i) => {
+                  const pageNum = i + 1;
+                  const isCurrent = pageNum === currentPage;
+                  return (
+                    <button
+                      key={pageNum}
+                      type="button"
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`h-9 w-9 rounded-xl text-xs font-bold transition cursor-pointer ${
+                        isCurrent
+                          ? "bg-primary text-primary-foreground shadow-xs"
+                          : "border border-border bg-card hover:bg-muted text-foreground"
+                      }`}
                     >
-                      {language === "hi" ? "परिवार सारांश" : "Family Portal"}
-                    </Link>
-                    <Link
-                      href="/applications"
-                      className="flex-1 py-1.5 px-2 rounded-xl border border-border text-center text-[11px] font-semibold hover:bg-muted text-foreground transition"
-                    >
-                      {language === "hi" ? "दाखिला ब्यौरा" : "Apply Details"}
-                    </Link>
-                  </div>
-                </div>
+                      {pageNum}
+                    </button>
+                  );
+                })}
               </div>
-            );
-          })}
+
+              <button
+                type="button"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-3.5 py-2 rounded-xl border border-border bg-card hover:bg-muted text-foreground font-semibold text-xs flex items-center gap-1 transition disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+              >
+                <span>{language === "hi" ? "अगला" : "Next"}</span>
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         /* Empty State */

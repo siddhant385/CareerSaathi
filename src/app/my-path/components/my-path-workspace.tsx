@@ -11,7 +11,18 @@ import { CompareDialog } from "./compare-dialog";
 import { SaathiHelpSheet } from "../../onboarding/components/saathi-help-sheet";
 import { getSelectedCareerId, setSelectedCareerId, getSelectedCareer } from "@/lib/career-store";
 import { getStoredLanguage } from "@/lib/profile-store";
-import { Sparkles, Users, FileText, Search, X, SlidersHorizontal, CheckCircle2, ArrowRight } from "lucide-react";
+import {
+  Sparkles,
+  Users,
+  FileText,
+  Search,
+  X,
+  SlidersHorizontal,
+  CheckCircle2,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 export function MyPathWorkspace() {
   const router = useRouter();
@@ -22,6 +33,7 @@ export function MyPathWorkspace() {
   const [compareIds, setCompareIds] = useState<string[]>(["electrician", "auto_technician"]);
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [isSaathiOpen, setIsSaathiOpen] = useState(false);
+  const [matchPage, setMatchPage] = useState<number>(1);
 
   useEffect(() => {
     setLanguage(getStoredLanguage());
@@ -63,6 +75,10 @@ export function MyPathWorkspace() {
       selectedCategory === "all" || path.category === selectedCategory;
     return matchesCategory;
   });
+
+  // Batching logic: Page 1 = Top 3 Matches, Page 2 = Alternative Matches 4-6
+  const totalMatchPages = Math.max(1, Math.ceil(filteredPaths.length / 3));
+  const displayedPaths = filteredPaths.slice((matchPage - 1) * 3, matchPage * 3);
 
   const selectedPathsForCompare = allCareerPaths.filter((p) =>
     compareIds.includes(p.id)
@@ -199,6 +215,7 @@ export function MyPathWorkspace() {
                     router.push(`/explore?category=${cat.id}`);
                   } else {
                     setSelectedCategory("all");
+                    setMatchPage(1);
                   }
                 }}
                 className={`px-3 py-1.5 rounded-full whitespace-nowrap text-xs font-semibold flex items-center gap-1 transition cursor-pointer ${
@@ -238,14 +255,18 @@ export function MyPathWorkspace() {
       )}
 
       {/* Top Curated Recommendations Grid */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-sm text-foreground flex items-center gap-1.5">
             <Sparkles className="h-4 w-4 text-primary" />
             <span>
-              {language === "hi"
-                ? "आपके लिए शीर्ष 3 सुझाव (ऑनबोर्डिंग अनुसार)"
-                : "Top Curated Matches For You"}
+              {matchPage === 1
+                ? language === "hi"
+                  ? "आपके लिए शीर्ष 3 सुझाव (बैच 1)"
+                  : "Top 3 High-Match Choices (Batch 1)"
+                : language === "hi"
+                ? "अन्य 3 विकल्प (बैच 2)"
+                : "Alternative Recommendations (Batch 2)"}
             </span>
           </h3>
 
@@ -258,7 +279,7 @@ export function MyPathWorkspace() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {filteredPaths.map((path) => (
+          {displayedPaths.map((path) => (
             <CareerCard
               key={path.id}
               path={path}
@@ -271,6 +292,47 @@ export function MyPathWorkspace() {
             />
           ))}
         </div>
+
+        {/* 2-Batch Progressive Pagination Controls */}
+        {totalMatchPages > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-2xl bg-card border shadow-xs text-xs">
+            <span className="text-muted-foreground">
+              {language === "hi"
+                ? `सुझाव समूह: ${matchPage} of ${totalMatchPages}`
+                : `Recommendation Batch: ${matchPage} of ${totalMatchPages}`}
+            </span>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setMatchPage((prev) => Math.max(1, prev - 1))}
+                disabled={matchPage === 1}
+                className="px-3 py-1.5 rounded-xl border border-border bg-background hover:bg-muted font-semibold transition disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1 cursor-pointer"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                <span>{language === "hi" ? "शीर्ष 3 देखें" : "Top 3 Matches"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMatchPage((prev) => Math.min(totalMatchPages, prev + 1))}
+                disabled={matchPage === totalMatchPages}
+                className="px-3 py-1.5 rounded-xl border border-border bg-background hover:bg-muted font-semibold transition disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1 cursor-pointer"
+              >
+                <span>{language === "hi" ? "अगले 3 विकल्प" : "Next 3 Matches"}</span>
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+
+              <Link
+                href="/explore"
+                className="px-3 py-1.5 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition shadow-xs flex items-center gap-1"
+              >
+                <span>{language === "hi" ? "सभी देखें" : "View All"}</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Side-by-side modal */}
