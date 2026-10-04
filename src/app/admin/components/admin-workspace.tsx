@@ -13,6 +13,8 @@ import type {
   TradeEditorItem,
 } from "./types";
 import { getStoredLanguage } from "@/lib/profile-store";
+import { getStoredLiveEvents, type LiveActivityEvent } from "@/lib/activity-store";
+import { getSelectedCareer } from "@/lib/career-store";
 import type { SupportedLanguage } from "../../onboarding/components/types";
 import {
   Users,
@@ -37,9 +39,10 @@ import {
 
 export function AdminWorkspace() {
   const [language, setLanguage] = useState<SupportedLanguage>("en");
-  const [activeTab, setActiveTab] = useState<"callbacks" | "sentiment" | "trades">("callbacks");
+  const [activeTab, setActiveTab] = useState<"callbacks" | "sentiment" | "trades" | "live_feed">("callbacks");
   const [leads, setLeads] = useState<FamilyCallbackLead[]>(initialFamilyLeads);
   const [trades, setTrades] = useState<TradeEditorItem[]>(initialEditableTrades);
+  const [liveEvents, setLiveEvents] = useState<LiveActivityEvent[]>([]);
   const [selectedLeadId, setSelectedLeadId] = useState<string>(initialFamilyLeads[0]?.id || "");
   const [filterSentiment, setFilterSentiment] = useState<string>("all");
   const [searchLeadQuery, setSearchLeadQuery] = useState("");
@@ -55,9 +58,18 @@ export function AdminWorkspace() {
 
   useEffect(() => {
     setLanguage(getStoredLanguage());
+    setLiveEvents(getStoredLiveEvents());
+
     const onLangChange = () => setLanguage(getStoredLanguage());
+    const onLiveEvent = () => setLiveEvents(getStoredLiveEvents());
+
     window.addEventListener("careersaathi_language_changed", onLangChange);
-    return () => window.removeEventListener("careersaathi_language_changed", onLangChange);
+    window.addEventListener("careersaathi_live_event_logged", onLiveEvent);
+
+    return () => {
+      window.removeEventListener("careersaathi_language_changed", onLangChange);
+      window.removeEventListener("careersaathi_live_event_logged", onLiveEvent);
+    };
   }, []);
 
   const selectedLead = leads.find((l) => l.id === selectedLeadId) || leads[0];
@@ -261,6 +273,26 @@ export function AdminWorkspace() {
           <span>
             {language === "hi" ? "ट्रेड व फीस एडिटर (Content Form)" : "Verified Trade Data Editor"}
           </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("live_feed")}
+          className={`px-4 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer ${
+            activeTab === "live_feed"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+          }`}
+        >
+          <Sparkles className="h-4 w-4" />
+          <span>
+            {language === "hi" ? "लाइव यूजर एक्टिविटी (Realtime Feed)" : "Live User Activity Feed"}
+          </span>
+          {liveEvents.length > 0 && (
+            <span className="ml-1 px-1.5 py-0.2 bg-emerald-600 text-white rounded-full text-[10px] animate-pulse">
+              {liveEvents.length}
+            </span>
+          )}
         </button>
       </div>
 
@@ -745,6 +777,74 @@ export function AdminWorkspace() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: LIVE USER ACTIVITY STREAM */}
+      {activeTab === "live_feed" && (
+        <div className="space-y-4">
+          <div className="bg-card border rounded-2xl p-5 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div>
+                <span className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+                  <span>Realtime Telemetry & Family Action Stream</span>
+                </span>
+                <h3 className="font-bold text-base text-foreground mt-1">
+                  {language === "hi"
+                    ? "लाइव छात्र एवं अभिभावक गतिविधियां"
+                    : "Live Actions Recorded Across Student & Family Portals"}
+                </h3>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                Auto-syncs whenever user changes trades, requests callbacks, or listens to audio.
+              </span>
+            </div>
+
+            {liveEvents.length > 0 ? (
+              <div className="space-y-2.5">
+                {liveEvents.map((ev) => (
+                  <div
+                    key={ev.id}
+                    className="p-3.5 rounded-xl border bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs transition hover:bg-muted/40"
+                  >
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-foreground text-sm">
+                          {ev.type === "callback_requested"
+                            ? "📞 Callback Requested"
+                            : ev.type === "trade_selected"
+                            ? "🎯 Career Path Chosen"
+                            : "✨ User Interaction"}
+                        </span>
+                        <span className="text-[10px] bg-primary/10 text-primary font-bold px-2 py-0.5 rounded-full">
+                          {ev.tradeTitle}
+                        </span>
+                      </div>
+                      <p className="text-muted-foreground">{ev.details}</p>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="text-[11px] font-mono font-semibold text-muted-foreground block">
+                        {ev.timestamp}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">{ev.location}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-8 text-center text-xs text-muted-foreground border border-dashed rounded-2xl space-y-2">
+                <Sparkles className="h-6 w-6 text-muted-foreground mx-auto" />
+                <p className="font-semibold text-foreground">
+                  No live events in current session yet.
+                </p>
+                <p>
+                  When users select trades in My Path / Explore or submit callback requests on the Family Portal, actions will stream live here.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}

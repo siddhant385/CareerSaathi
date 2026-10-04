@@ -98,16 +98,6 @@ export function AppNavigationShell() {
         {/* User state indicator */}
         <div className="flex items-center gap-2">
           <Link
-            href="/admin"
-            className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition ${
-              pathname === "/admin"
-                ? "bg-primary text-primary-foreground border-primary"
-                : "border-border hover:bg-muted text-foreground"
-            }`}
-          >
-            Admin / काउंसलर
-          </Link>
-          <Link
             href="/profile"
             className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition ${
               pathname === "/profile"

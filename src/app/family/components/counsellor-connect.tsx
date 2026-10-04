@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { CounsellorProfile } from "./types";
+import { recordLiveEvent } from "@/lib/activity-store";
 import type { SupportedLanguage } from "../../onboarding/components/types";
 import {
   MessageCircle,
@@ -30,6 +31,13 @@ export function CounsellorConnect({ counsellors, language }: CounsellorConnectPr
     e.preventDefault();
     if (parentPhone.trim().length >= 10) {
       setIsBooked(true);
+      recordLiveEvent({
+        type: "callback_requested",
+        studentName: "Student Family",
+        location: "Patna / Bihar",
+        tradeTitle: "Selected ITI Trade",
+        details: `Parent Phone: ${parentPhone}, Slot: ${preferredTime}, Counsellor: ${activeCounsellor.name}`,
+      });
     }
   }
 

@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 
 export function ProfileWorkspace() {
-  const [profile, setProfile] = useState<UserProfile>(getStoredProfile());
+  const [profile, setProfile] = useState<UserProfile>(initialProfile);
   const [savedAlert, setSavedAlert] = useState(false);
   const [, startTransition] = useTransition();
 

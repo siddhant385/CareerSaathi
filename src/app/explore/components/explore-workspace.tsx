@@ -8,6 +8,7 @@ import type { CareerCategory } from "../../my-path/components/types";
 import type { SupportedLanguage } from "../../onboarding/components/types";
 import { getStoredLanguage } from "@/lib/profile-store";
 import { getSelectedCareerId, setSelectedCareerId } from "@/lib/career-store";
+import { recordLiveEvent } from "@/lib/activity-store";
 import {
   Search,
   X,
@@ -74,6 +75,13 @@ function ExploreContent() {
   function handleSelectTrade(trade: ExtendedTrade) {
     setSelectedCareerId(trade.id);
     setCareerIdState(trade.id);
+    recordLiveEvent({
+      type: "trade_selected",
+      studentName: "Student",
+      location: "Bihar / Jharkhand",
+      tradeTitle: trade.title,
+      details: `Fee: ${trade.govtFee} | Pay: ${trade.startingPay}`,
+    });
     setSelectedSuccessToast(
       language === "hi"
         ? `"${trade.title}" को आपका मुख्य करियर चुना गया! अब यह फैमिली पोर्टल एवं दाखिला चेकलिस्ट में दिखेगा।`

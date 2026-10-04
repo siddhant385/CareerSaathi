@@ -17,6 +17,7 @@ export interface FamilyCallbackLead {
   status: "pending" | "in_progress" | "resolved" | "follow_up_needed";
   counsellorNotes?: string;
   assignedCounsellor?: string;
+  isRealtime?: boolean;
 }
 
 export interface TradeEditorItem {

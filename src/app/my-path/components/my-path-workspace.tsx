@@ -9,7 +9,8 @@ import type { SupportedLanguage } from "../../onboarding/components/types";
 import { CareerCard } from "./career-card";
 import { CompareDialog } from "./compare-dialog";
 import { SaathiHelpSheet } from "../../onboarding/components/saathi-help-sheet";
-import { getSelectedCareerId, setSelectedCareerId, getSelectedCareer } from "@/lib/career-store";
+import { getSelectedCareerId, setSelectedCareerId } from "@/lib/career-store";
+import { recordLiveEvent } from "@/lib/activity-store";
 import { getStoredLanguage } from "@/lib/profile-store";
 import {
   Sparkles,
@@ -47,6 +48,16 @@ export function MyPathWorkspace() {
   function handleSelectCareer(id: string) {
     setSelectedCareerId(id);
     setCareerIdState(id);
+    const chosen = allCareerPaths.find((p) => p.id === id);
+    if (chosen) {
+      recordLiveEvent({
+        type: "trade_selected",
+        studentName: "Student",
+        location: "Bihar / Jharkhand",
+        tradeTitle: chosen.title,
+        details: `Selected from My Path recommendations (${chosen.startingPay})`,
+      });
+    }
   }
 
   function handleSearchSubmit(e: React.FormEvent) {
@@ -67,7 +78,8 @@ export function MyPathWorkspace() {
   ];
 
   const allCareerPaths = getCareerPaths(language);
-  const currentActiveCareer = getSelectedCareer(language);
+  const currentActiveCareer =
+    allCareerPaths.find((p) => p.id === selectedCareerId) || allCareerPaths[0];
 
   // Filter paths based on category on My Path
   const filteredPaths = allCareerPaths.filter((path) => {
