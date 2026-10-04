@@ -17,6 +17,8 @@ The product must be welcoming to low-confidence, low-literacy, and mobile-first 
 4. **Family is invited, not imposed.** A parent or guardian is added after the learner receives starting options.
 5. **Evidence over promises.** Local outcomes, pay, safety, and provider information are visibly classified as verified data, Saathi guidance, or information to confirm.
 6. **Accessible by default.** Plain language, regional-language support, large tap targets, no hover-only actions, and optional voice assistance.
+7. **Usable with low literacy.** Prefer pictures, audio, familiar choices, and short spoken-style prompts over reading-heavy forms or technical labels.
+8. **Use the existing visual system.** UI colors, spacing, typography, and component states must build on the CSS tokens already defined in `src/app/globals.css`; do not introduce a separate fixed palette.
 
 ## Product Structure
 
@@ -97,11 +99,21 @@ Never ask for portal passwords or imply access to an account during onboarding. 
 
 ### Visual language
 
-- Off-white base for warmth and reduced glare.
-- Deep indigo for primary actions and trust.
-- Warm saffron/amber for active progress and gentle attention.
-- Green only for verified information or completed progress.
-- Text labels accompany all icons. Use clear contrast and readable type sizing.
+- Build on the existing `src/app/globals.css` design tokens for all colors, spacing, typography, and component states. Do not hard-code a separate product palette in feature components.
+- Use semantic existing tokens for emphasis: `primary` for the next action, `muted` for supportive context, `destructive` for blocking errors, and only dedicated global status tokens for verified/completed states when required.
+- Text labels accompany every icon. Use clear contrast, a readable default type size, and generous spacing.
+- Use one concept per screen. Familiar illustrations or photographs may reinforce a choice, but never carry meaning without a visible label or optional spoken explanation.
+
+### Low-literacy and rural-first interaction rules
+
+- Write prompts as brief everyday questions: “What work do you enjoy?” rather than “Select your vocational preference.”
+- Keep body copy to one or two short sentences; use the learner's selected regional language throughout, including error and privacy messages.
+- Prefer large image-and-label choice cards, simple yes/no choices, and examples over free-text fields, long descriptions, or multi-select terminology.
+- Provide a visible **Listen** control beside each question and important result; voice is optional and never the only way to proceed.
+- Use familiar wording for files and portals: “Upload your biodata/resume” and “Do you have a job-app profile?” Explain unfamiliar terms in one sentence.
+- Avoid asking for dates, costs, or official document details until necessary. When needed, show a local example and let the user choose “I don't know.”
+- Use clear confirmations after every meaningful action, such as “Saved. You can continue later.” Do not rely on colour, animation, or a toast alone.
+- Let a trusted helper assist on the same device without granting them permanent access; family sharing remains explicitly controlled by the learner.
 
 ## My Path and comparison
 
@@ -176,3 +188,5 @@ Personal learner responses and the resume remain private by default. Sharing occ
 6. Family access is opt-in, scoped, and does not expose the resume or private answers by default.
 7. Application assistance requires a user-visible review before anything is submitted.
 8. Mobile behavior works without hover, with clear labels and touch-sized controls.
+9. All feature styling uses the existing `src/app/globals.css` tokens; no separate hard-coded palette is introduced.
+10. A low-literacy user can answer using labelled visual choices and optional Listen help, without needing to understand technical vocabulary.
