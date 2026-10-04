@@ -81,7 +81,7 @@ export function OnboardingFlow() {
 
         <div className="w-full space-y-3 pt-4">
           <Link
-            href="/counselling"
+            href="/my-path"
             className="flex items-center justify-center w-full h-12 text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/80 transition"
           >
             {t.seeOptions}
