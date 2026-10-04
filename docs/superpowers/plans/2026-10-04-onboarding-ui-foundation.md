@@ -39,12 +39,14 @@
 | `src/app/globals.css` | Existing global CSS-token system plus only the global utility styles required for readable focus and safe-area behavior. |
 | `src/app/page.tsx` | Landing entry point linking/navigating to onboarding. |
 | `src/app/onboarding/page.tsx` | Onboarding route server page. |
-| `src/app/onboarding/components/types.ts` | Route-local profile, question, and answer types. |
-| `src/app/onboarding/components/questions.ts` | Typed onboarding-step content, low-literacy copy, options, and per-step optionality. |
-| `src/app/onboarding/components/onboarding-flow.tsx` | Client state machine for answers, step navigation, save/exit confirmation, and compact Saathi help sheet. |
+| `src/app/onboarding/components/types.ts` | Route-local profile, language (`en` | `hi`), question, and answer types. |
+| `src/app/onboarding/components/i18n.ts` | Scalable bilingual dictionary for English and Hindi UI copy, questions, choices, and help strings. |
+| `src/app/onboarding/components/questions.ts` | Typed onboarding-step content and step definitions supporting bilingual resolution. |
+| `src/app/onboarding/components/onboarding-flow.tsx` | Client state machine for active language, answers, step navigation, save/exit, and compact Saathi help. |
 | `src/app/onboarding/components/onboarding-question.tsx` | Accessible renderer for a single question and its choice/input controls. |
-| `src/app/onboarding/components/onboarding-progress.tsx` | Named numeric progress display. |
-| `src/app/onboarding/components/saathi-help-sheet.tsx` | Non-destructive help bottom sheet/panel with selected-language copy. |
+| `src/app/onboarding/components/onboarding-progress.tsx` | Named numeric progress display in active language. |
+| `src/app/onboarding/components/saathi-help-sheet.tsx` | Non-destructive help bottom sheet/panel in active language. |
+| `src/app/onboarding/components/language-selector.tsx` | Clear, accessible bilingual switch (English / हिन्दी). |
 
 ## Task 1: Establish the onboarding route shell and project-safe checks
 
@@ -88,10 +90,12 @@ git add src/app/layout.tsx src/app/page.tsx src/app/globals.css src/app/onboardi
 git commit -m "feat: add onboarding route shell"
 ```
 
-## Task 2: Define typed onboarding content and readable selection controls
+## Task 2: Define bilingual dictionary, typed onboarding content, and selection controls
 
 **Files:**
 - Create: `src/app/onboarding/components/types.ts`
+- Create: `src/app/onboarding/components/i18n.ts`
+- Create: `src/app/onboarding/components/language-selector.tsx`
 - Create: `src/app/onboarding/components/questions.ts`
 - Create: `src/app/onboarding/components/onboarding-progress.tsx`
 - Create: `src/app/onboarding/components/onboarding-question.tsx`
@@ -99,9 +103,10 @@ git commit -m "feat: add onboarding route shell"
 
 **Interfaces:**
 - Consumes: `OnboardingFlow()` from Task 1.
-- Produces: `export type OnboardingAnswer = string | string[] | null`, `export interface OnboardingStep`, and `export const onboardingSteps: readonly OnboardingStep[]` from `questions.ts`.
+- Produces: `export type SupportedLanguage = 'en' | 'hi'`, `export type OnboardingAnswer = string | string[] | null`, `export interface OnboardingStep`, and `export function getOnboardingSteps(lang: SupportedLanguage): readonly OnboardingStep[]` from `questions.ts`.
+- Produces: `export function LanguageSelector({ language, onSelect }: { language: SupportedLanguage; onSelect: (l: SupportedLanguage) => void }): React.JSX.Element`.
 - Produces: `export function OnboardingProgress({ currentStep, totalSteps, label }: { currentStep: number; totalSteps: number; label: string }): React.JSX.Element`.
-- Produces: `export function OnboardingQuestion({ step, value, onChange }: { step: OnboardingStep; value: OnboardingAnswer; onChange: (value: OnboardingAnswer) => void }): React.JSX.Element`.
+- Produces: `export function OnboardingQuestion({ step, value, onChange, language }: { step: OnboardingStep; value: OnboardingAnswer; onChange: (value: OnboardingAnswer) => void; language: SupportedLanguage }): React.JSX.Element`.
 
 - [ ] **Step 1: Write a failing content integrity check using the runner found in Task 1, if available**
 

@@ -25,8 +25,7 @@ The product must be welcoming to low-confidence, low-literacy, and mobile-first 
 ### First-time journey
 
 ```text
-Welcome
-  → Language and accessibility
+Welcome / Language selection (English / हिन्दी)
   → Learner basics
   → Education and experience
   → Interests and working preferences
@@ -38,7 +37,7 @@ Welcome
   → My Path
 ```
 
-The initial outcome is a jointly understandable starting recommendation, not a final career verdict. Family participation starts from My Path after the learner has control over what is shared.
+The onboarding flow begins with an explicit language picker (`English` and `हिन्दी`). Selecting a language dynamically re-renders all UI copy (questions, choices, explanations, buttons, and Saathi help). The structure is designed as an extensible dictionary to easily support regional languages (e.g., Tamil, Telugu, Marathi, Bengali) in the future.
 
 ### Primary navigation
 
