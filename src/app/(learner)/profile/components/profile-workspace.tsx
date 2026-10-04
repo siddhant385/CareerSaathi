@@ -584,6 +584,7 @@ export function ProfileWorkspace() {
               onClick={async () => {
                 await supabase.auth.signOut();
                 setAuthUser(null);
+                window.location.href = "/login";
               }}
               className="px-3.5 py-1.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
             >

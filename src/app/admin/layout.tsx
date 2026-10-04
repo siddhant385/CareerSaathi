@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ShieldCheck, ArrowLeft } from "lucide-react";
+import { ShieldCheck, ArrowLeft, LogOut } from "lucide-react";
+import { signOutAction } from "@/app/actions/auth";
 
 export const metadata: Metadata = {
   title: "Admin & Counsellor Hub - CareerSaathi",
@@ -41,8 +42,18 @@ export default function AdminLayout({
             className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center gap-1.5 transition"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            <span>Learner App View</span>
+            <span>Learner View</span>
           </Link>
+
+          <form action={signOutAction}>
+            <button
+              type="submit"
+              className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-red-900/50 bg-red-950/40 hover:bg-red-900/60 text-red-300 flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>Sign Out</span>
+            </button>
+          </form>
         </div>
       </header>
 
@@ -50,3 +61,4 @@ export default function AdminLayout({
     </div>
   );
 }
+
