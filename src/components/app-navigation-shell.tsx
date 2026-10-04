@@ -20,6 +20,12 @@ export function AppNavigationShell() {
       icon: Compass,
     },
     {
+      href: "/explore",
+      labelEn: "Explore",
+      labelHi: "ट्रेड्स",
+      icon: Compass,
+    },
+    {
       href: "/counselling",
       labelEn: "Saathi Call",
       labelHi: "साथी कॉल",
