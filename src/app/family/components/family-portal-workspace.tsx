@@ -6,8 +6,8 @@ import { seniorCounsellors, parentConcerns } from "./data";
 import { ParentSummary } from "./parent-summary";
 import { CounsellorConnect } from "./counsellor-connect";
 import type { SupportedLanguage } from "../../onboarding/components/types";
-import { LanguageSelector } from "../../onboarding/components/language-selector";
 import { getSelectedCareer } from "@/lib/career-store";
+import { getStoredLanguage } from "@/lib/profile-store";
 import type { CareerPath } from "../../../app/my-path/components/types";
 import { Users, ArrowLeft, MessageSquare, CheckCircle2 } from "lucide-react";
 
@@ -16,13 +16,25 @@ export function FamilyPortalWorkspace() {
   const [activeCareer, setActiveCareer] = useState<CareerPath | null>(null);
 
   useEffect(() => {
-    setActiveCareer(getSelectedCareer(language));
+    setLanguage(getStoredLanguage());
+    setActiveCareer(getSelectedCareer(getStoredLanguage()));
+
     const handleCareerChange = () => {
-      setActiveCareer(getSelectedCareer(language));
+      setActiveCareer(getSelectedCareer(getStoredLanguage()));
     };
+    const handleLangChange = () => {
+      const l = getStoredLanguage();
+      setLanguage(l);
+      setActiveCareer(getSelectedCareer(l));
+    };
+
     window.addEventListener("careersaathi_career_changed", handleCareerChange);
-    return () => window.removeEventListener("careersaathi_career_changed", handleCareerChange);
-  }, [language]);
+    window.addEventListener("careersaathi_language_changed", handleLangChange);
+    return () => {
+      window.removeEventListener("careersaathi_career_changed", handleCareerChange);
+      window.removeEventListener("careersaathi_language_changed", handleLangChange);
+    };
+  }, []);
 
   const career = activeCareer || getSelectedCareer(language);
 
@@ -95,11 +107,13 @@ export function FamilyPortalWorkspace() {
           </h1>
         </div>
 
-        <div className="flex items-center gap-3">
-          <LanguageSelector
-            language={language}
-            onSelect={(l) => setLanguage(l)}
-          />
+        <div className="flex items-center gap-2">
+          <Link
+            href="/profile"
+            className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition"
+          >
+            {language === "hi" ? "⚙️ भाषा / प्रोफाइल" : "⚙️ Profile & Lang"}
+          </Link>
         </div>
       </header>
 

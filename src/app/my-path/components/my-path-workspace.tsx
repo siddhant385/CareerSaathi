@@ -7,10 +7,10 @@ import type { CareerCategory } from "./types";
 import type { SupportedLanguage } from "../../onboarding/components/types";
 import { CareerCard } from "./career-card";
 import { CompareDialog } from "./compare-dialog";
-import { LanguageSelector } from "../../onboarding/components/language-selector";
 import { SaathiHelpSheet } from "../../onboarding/components/saathi-help-sheet";
 import { getSelectedCareerId, setSelectedCareerId, getSelectedCareer } from "@/lib/career-store";
-import { Sparkles, Users, FileText, Search, X, SlidersHorizontal, CheckCircle2, ArrowRight } from "lucide-react";
+import { getStoredLanguage } from "@/lib/profile-store";
+import { Sparkles, Users, FileText, Search, X, SlidersHorizontal, CheckCircle2 } from "lucide-react";
 
 export function MyPathWorkspace() {
   const [language, setLanguage] = useState<SupportedLanguage>("en");
@@ -22,7 +22,12 @@ export function MyPathWorkspace() {
   const [isSaathiOpen, setIsSaathiOpen] = useState(false);
 
   useEffect(() => {
+    setLanguage(getStoredLanguage());
     setCareerIdState(getSelectedCareerId());
+
+    const onLangChange = () => setLanguage(getStoredLanguage());
+    window.addEventListener("careersaathi_language_changed", onLangChange);
+    return () => window.removeEventListener("careersaathi_language_changed", onLangChange);
   }, []);
 
   function handleSelectCareer(id: string) {
@@ -88,11 +93,13 @@ export function MyPathWorkspace() {
           </h1>
         </div>
 
-        <div className="flex items-center gap-3">
-          <LanguageSelector
-            language={language}
-            onSelect={(l) => setLanguage(l)}
-          />
+        <div className="flex items-center gap-2">
+          <Link
+            href="/profile"
+            className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition"
+          >
+            {language === "hi" ? "⚙️ भाषा / प्रोफाइल बदलें" : "⚙️ Profile & Lang"}
+          </Link>
         </div>
       </header>
 

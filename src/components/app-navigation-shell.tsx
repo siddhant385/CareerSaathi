@@ -38,6 +38,12 @@ export function AppNavigationShell() {
       labelHi: "दस्तावेज",
       icon: FileText,
     },
+    {
+      href: "/profile",
+      labelEn: "Profile",
+      labelHi: "प्रोफाइल",
+      icon: Users,
+    },
   ];
 
   return (
@@ -86,10 +92,14 @@ export function AppNavigationShell() {
         {/* User state indicator */}
         <div className="flex items-center gap-2">
           <Link
-            href="/onboarding"
-            className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-border hover:bg-muted text-foreground transition"
+            href="/profile"
+            className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition ${
+              pathname === "/profile"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "border-border hover:bg-muted text-foreground"
+            }`}
           >
-            Edit Profile / प्रोफाइल बदलें
+            Profile & Settings / सेटिंग्स
           </Link>
         </div>
       </header>

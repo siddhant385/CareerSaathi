@@ -6,8 +6,8 @@ import { VRMScene } from "./vrm-scene";
 import { getCareerDialogues } from "./data";
 import { GenerativeWidget } from "./generative-widget";
 import type { SupportedLanguage } from "../../onboarding/components/types";
-import { LanguageSelector } from "../../onboarding/components/language-selector";
 import { getSelectedCareer } from "@/lib/career-store";
+import { getStoredLanguage } from "@/lib/profile-store";
 import type { CareerPath } from "@/app/my-path/components/types";
 import {
   Mic,
@@ -34,13 +34,25 @@ export function CounsellingCallWorkspace() {
   const [callDuration, setCallDuration] = useState(12);
 
   useEffect(() => {
-    setActiveCareer(getSelectedCareer(language));
+    setLanguage(getStoredLanguage());
+    setActiveCareer(getSelectedCareer(getStoredLanguage()));
+
     const handleCareerChange = () => {
-      setActiveCareer(getSelectedCareer(language));
+      setActiveCareer(getSelectedCareer(getStoredLanguage()));
     };
+    const handleLangChange = () => {
+      const l = getStoredLanguage();
+      setLanguage(l);
+      setActiveCareer(getSelectedCareer(l));
+    };
+
     window.addEventListener("careersaathi_career_changed", handleCareerChange);
-    return () => window.removeEventListener("careersaathi_career_changed", handleCareerChange);
-  }, [language]);
+    window.addEventListener("careersaathi_language_changed", handleLangChange);
+    return () => {
+      window.removeEventListener("careersaathi_career_changed", handleCareerChange);
+      window.removeEventListener("careersaathi_language_changed", handleLangChange);
+    };
+  }, []);
 
   const career = activeCareer || getSelectedCareer(language);
   const dialogues = getCareerDialogues(career, language);
@@ -130,11 +142,6 @@ export function CounsellingCallWorkspace() {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <LanguageSelector
-            language={language}
-            onSelect={(l) => setLanguage(l)}
-          />
-
           <Link
             href="/my-path"
             className="px-3 py-1.5 bg-red-600/90 hover:bg-red-600 text-white rounded-full text-xs font-bold flex items-center gap-1.5 transition shadow-lg"
