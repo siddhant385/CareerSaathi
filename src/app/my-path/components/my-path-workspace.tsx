@@ -3,24 +3,53 @@
 import { useState } from "react";
 import Link from "next/link";
 import { getCareerPaths } from "./data";
-import type { DecisionStage } from "./types";
+import type { CareerCategory, DecisionStage } from "./types";
 import type { SupportedLanguage } from "../../onboarding/components/types";
 import { CareerCard } from "./career-card";
 import { CompareDialog } from "./compare-dialog";
 import { DecisionProgress } from "./decision-progress";
 import { LanguageSelector } from "../../onboarding/components/language-selector";
 import { SaathiHelpSheet } from "../../onboarding/components/saathi-help-sheet";
-import { Sparkles, Users, MessageSquare } from "lucide-react";
+import { Sparkles, Users, MessageSquare, Search, X, SlidersHorizontal } from "lucide-react";
 
 export function MyPathWorkspace() {
   const [language, setLanguage] = useState<SupportedLanguage>("en");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<CareerCategory>("all");
   const [compareIds, setCompareIds] = useState<string[]>(["electrician", "auto_technician"]);
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [isSaathiOpen, setIsSaathiOpen] = useState(false);
   const [decisionStage] = useState<DecisionStage>("comparing");
 
-  const careerPaths = getCareerPaths(language);
-  const selectedPathsForCompare = careerPaths.filter((p) =>
+  const categories: { id: CareerCategory; labelEn: string; labelHi: string; icon: string }[] = [
+    { id: "all", labelEn: "All Trades", labelHi: "सभी काम", icon: "✨" },
+    { id: "electrical", labelEn: "Electrical & Solar", labelHi: "बिजली / सोलर", icon: "⚡" },
+    { id: "auto", labelEn: "Auto & Mechanical", labelHi: "गाड़ी / औजार", icon: "🚗" },
+    { id: "digital", labelEn: "Office & Digital", labelHi: "कंप्यूटर / ऑफिस", icon: "💻" },
+    { id: "healthcare", labelEn: "Hospital & Health", labelHi: "स्वास्थ्य / केयर", icon: "🏥" },
+    { id: "construction", labelEn: "Plumbing / Field", labelHi: "प्लंबिंग / निर्माण", icon: "🔧" },
+    { id: "craft", labelEn: "Tailoring & Craft", labelHi: "सिलाई / हस्तकला", icon: "🧵" },
+  ];
+
+  const allCareerPaths = getCareerPaths(language);
+
+  // Filter paths based on search keyword and category
+  const filteredPaths = allCareerPaths.filter((path) => {
+    const matchesCategory =
+      selectedCategory === "all" || path.category === selectedCategory;
+
+    const query = searchQuery.trim().toLowerCase();
+    const matchesQuery =
+      query === "" ||
+      path.title.toLowerCase().includes(query) ||
+      path.workStyle.toLowerCase().includes(query) ||
+      path.whyFit.toLowerCase().includes(query) ||
+      path.keySkills.some((s) => s.toLowerCase().includes(query));
+
+    return matchesCategory && matchesQuery;
+  });
+
+  const selectedPathsForCompare = allCareerPaths.filter((p) =>
     compareIds.includes(p.id)
   );
 
@@ -44,8 +73,8 @@ export function MyPathWorkspace() {
           </span>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
             {language === "hi"
-              ? "आपके लिए सर्वश्रेष्ठ 3 वोकेशनल रास्ते"
-              : "Top 3 Vocational Career Paths For You"}
+              ? "आपके लिए सर्वश्रेष्ठ वोकेशनल रास्ते"
+              : "Recommended Vocational Career Paths"}
           </h1>
         </div>
 
@@ -59,6 +88,56 @@ export function MyPathWorkspace() {
 
       {/* Decision stage tracker */}
       <DecisionProgress currentStage={decisionStage} language={language} />
+
+      {/* Search and Category Filter Bar */}
+      <div className="space-y-3 bg-card border rounded-2xl p-4 shadow-xs">
+        <div className="relative">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder={
+              language === "hi"
+                ? "काम खोजें (उदा. सोलर, इलेक्ट्रीशियन, नर्सिंग, कंप्यूटर, सिलाई)..."
+                : "Search trades (e.g., Solar, Electrician, Nursing, Computer, Tailoring)..."
+            }
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-11 pl-10 pr-10 rounded-xl border bg-background text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-ring transition"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        {/* 1-Tap Category Filter Chips */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+          <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground shrink-0 ml-1 mr-0.5" />
+          {categories.map((cat) => {
+            const isActive = selectedCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-3 py-1.5 rounded-full whitespace-nowrap text-xs font-semibold flex items-center gap-1 transition ${
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "bg-muted/50 border border-border text-foreground hover:bg-muted"
+                }`}
+              >
+                <span>{cat.icon}</span>
+                <span>{language === "hi" ? cat.labelHi : cat.labelEn}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Action banner to compare */}
       {compareIds.length > 0 && (
@@ -82,18 +161,84 @@ export function MyPathWorkspace() {
         </div>
       )}
 
-      {/* 3 Career Recommendation Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {careerPaths.map((path) => (
-          <CareerCard
-            key={path.id}
-            path={path}
-            language={language}
-            isSelectedForCompare={compareIds.includes(path.id)}
-            onToggleCompare={toggleCompare}
-            onAskSaathi={handleAskSaathi}
-          />
-        ))}
+      {/* Recommendations / Search Results Grid */}
+      {filteredPaths.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {filteredPaths.map((path) => (
+            <CareerCard
+              key={path.id}
+              path={path}
+              language={language}
+              isSelectedForCompare={compareIds.includes(path.id)}
+              onToggleCompare={toggleCompare}
+              onAskSaathi={handleAskSaathi}
+            />
+          ))}
+        </div>
+      ) : (
+        /* Zero State / Not Found Card */
+        <div className="bg-card border rounded-2xl p-8 text-center space-y-4 shadow-xs">
+          <div className="h-12 w-12 rounded-full bg-muted text-muted-foreground flex items-center justify-center mx-auto text-xl">
+            🔍
+          </div>
+          <div className="space-y-1">
+            <h3 className="font-bold text-base text-foreground">
+              {language === "hi" ? "कोई सटीक रास्ता नहीं मिला" : "No exact trade found"}
+            </h3>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+              {language === "hi"
+                ? "कृपया अलग शब्द खोजें या साथी से सलाह लें ताकि आपके लिए सही काम ढूंढा जा सके।"
+                : "Try adjusting your search keywords or ask Saathi to re-match based on your skills."}
+            </p>
+          </div>
+          <div className="flex items-center justify-center gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedCategory("all");
+              }}
+              className="px-4 py-2 rounded-xl border border-border text-xs font-semibold hover:bg-muted"
+            >
+              {language === "hi" ? "फ़िल्टर हटाएं" : "Clear Filters"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsSaathiOpen(true)}
+              className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold flex items-center gap-1.5"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>{language === "hi" ? "साथी से पूछें" : "Ask Saathi"}</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* "Not satisfied with recommendations?" Help Card */}
+      <div className="bg-gradient-to-r from-primary/5 via-muted/30 to-primary/5 border rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="space-y-1 text-center sm:text-left">
+          <h4 className="text-sm font-bold text-foreground flex items-center justify-center sm:justify-start gap-1.5">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <span>
+              {language === "hi"
+                ? "क्या आप कुछ और अलग ढूंढ रहे हैं?"
+                : "Looking for something different?"}
+            </span>
+          </h4>
+          <p className="text-xs text-muted-foreground">
+            {language === "hi"
+              ? "साथी से कहें कि वह आपकी रुचि और शिक्षा के आधार पर नए विकल्प खोजे।"
+              : "Tell Saathi your preferred work style to get custom suggestions."}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setIsSaathiOpen(true)}
+          className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shrink-0 hover:bg-primary/90 transition shadow-xs"
+        >
+          {language === "hi" ? "साथी से नई सलाह लें" : "Get Custom Suggestion"}
+        </button>
       </div>
 
       {/* Family & Counselling quick bar */}

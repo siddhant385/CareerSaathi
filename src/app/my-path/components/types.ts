@@ -1,5 +1,14 @@
 export type EvidenceLevel = "verified" | "guidance" | "toConfirm";
 
+export type CareerCategory =
+  | "all"
+  | "electrical"
+  | "auto"
+  | "digital"
+  | "healthcare"
+  | "craft"
+  | "construction";
+
 export type DecisionStage =
   | "learning"
   | "comparing"
@@ -8,6 +17,7 @@ export type DecisionStage =
 
 export interface CareerPath {
   id: string;
+  category: CareerCategory;
   title: string;
   matchScore: number;
   workStyle: string;

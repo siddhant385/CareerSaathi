@@ -4,8 +4,8 @@ import { getCareerPaths } from "../src/app/my-path/components/data.ts";
 const pathsEn = getCareerPaths("en");
 const pathsHi = getCareerPaths("hi");
 
-assert.equal(pathsEn.length, 3, "English career paths must have top 3 recommendations");
-assert.equal(pathsHi.length, 3, "Hindi career paths must have top 3 recommendations");
+assert.equal(pathsEn.length, 6, "English career paths must have 6 realistic recommendations");
+assert.equal(pathsHi.length, 6, "Hindi career paths must have 6 realistic recommendations");
 
 for (const path of pathsEn) {
   assert.ok(path.title, "Title required");
