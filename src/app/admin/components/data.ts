@@ -97,7 +97,7 @@ export const initialFamilyLeads: FamilyCallbackLead[] = [
     location: "Ranchi, Jharkhand",
     targetTrade: "Computer Operator (COPA) & Junior Accounts",
     govtFee: "₹2,500 / year",
-    sentimentLevel: "resolved",
+    sentimentLevel: "aligned",
     primaryResistance: "Concerned about whether 12th Arts student can handle GST accounting.",
     aiTranscriptSnippet:
       "Student asked about Tally training. Counsellor demonstrated non-math curriculum structure.",

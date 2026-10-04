@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { getStoredLanguage } from "@/lib/profile-store";
-import type { SupportedLanguage } from "../onboarding/components/types";
+import type { SupportedLanguage } from "@/app/(learner)/onboarding/components/types";
 import {
   Sparkles,
   Compass,
@@ -33,8 +33,8 @@ export function LandingPageWorkspace() {
       window.speechSynthesis.cancel();
       const text =
         language === "hi"
-          ? "करियर साथी में आपका स्वागत है। यहाँ विद्यार्थी और माता-पिता मिलकर वोकेशनल कोर्स, सरकारी आईटीआई फीस, और असली नौकरी के अवसरों की सही जानकारी प्राप्त कर सकते हैं। नीचे दिए गए बटन से अपनी शुरुआत करें।"
-          : "Welcome to CareerSaathi. Helping students and parents choose the right vocational career together, with verified government ITI fees, local jobs, and AI counselling. Tap start below.";
+          ? "करियर साथी में आपका स्वागत है। 10वीं और 12वीं के बाद सही वोकेशनल कोर्स, सरकारी आईटीआई फीस, और सुरक्षित नौकरी की सटीक जानकारी प्राप्त करें।"
+          : "Welcome to CareerSaathi. Explore verified vocational trades, government ITI fees, and starting salaries for students and families.";
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = language === "hi" ? "hi-IN" : "en-IN";
       window.speechSynthesis.speak(utterance);
@@ -119,29 +119,29 @@ export function LandingPageWorkspace() {
           <Sparkles className="h-3.5 w-3.5" />
           <span>
             {language === "hi"
-              ? "भारत का पहला परिवार-केंद्रित वोकेशनल करियर साथी"
-              : "India's #1 Family-Centred Vocational Guidance Platform"}
+              ? "वोकेशनल करियर एवं परिवार निर्णय गाइड"
+              : "Vocational Career & Family Decision Support"}
           </span>
         </div>
 
         <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground leading-[1.15]">
           {language === "hi" ? (
             <>
-              विद्यार्थी की पसंद, परिवार का भरोसा — <br className="hidden sm:inline" />
+              10वीं और 12वीं के बाद <br className="hidden sm:inline" />
               <span className="text-primary">सही वोकेशनल करियर</span> चुनें
             </>
           ) : (
             <>
-              Informed Vocational Choices, <br className="hidden sm:inline" />
-              <span className="text-primary">Decided Together with Family</span>
+              Find the Right Vocational Trade, <br className="hidden sm:inline" />
+              <span className="text-primary">Decide with Confidence</span>
             </>
           )}
         </h1>
 
         <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
           {language === "hi"
-            ? "10वीं और 12वीं के बाद सही वोकेशनल कोर्स, सरकारी आईटीआई फीस (₹1,500), शुरुआती वेतन और नजदीकी प्रमाणित प्रशिक्षण केंद्रों की पारदर्शी जानकारी।"
-            : "Helping students and parents explore verified vocational trades, government ITI subsidies, starting salaries, and nearby skill centers without confusion."}
+            ? "सरकारी आईटीआई फीस (₹1,500/वर्ष), शुरुआती वेतन और नजदीकी प्रमाणित प्रशिक्षण केंद्रों की सीधी और सटीक जानकारी।"
+            : "Verified government ITI fees, starting salaries, and nearby certified training centers for students and parents."}
         </p>
 
         {/* Audio Intro Button & Action CTAs */}
@@ -150,7 +150,7 @@ export function LandingPageWorkspace() {
             href="/onboarding"
             className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition shadow-md hover:shadow-lg cursor-pointer"
           >
-            <span>{language === "hi" ? "शुरुआत करें (निशुल्क) →" : "Start Free Onboarding →"}</span>
+            <span>{language === "hi" ? "करियर मार्गदर्शन शुरू करें →" : "Start Career Guidance →"}</span>
           </Link>
 
           <Link
@@ -158,7 +158,7 @@ export function LandingPageWorkspace() {
             className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-border bg-card hover:bg-muted text-foreground font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer"
           >
             <Compass className="h-4 w-4 text-primary" />
-            <span>{language === "hi" ? "माय पाथ देखें" : "Explore My Path"}</span>
+            <span>{language === "hi" ? "ट्रेड देखें" : "Explore Trades"}</span>
           </Link>
 
           <button
@@ -168,7 +168,7 @@ export function LandingPageWorkspace() {
             title="Listen to Audio Introduction"
           >
             <Volume2 className="h-4 w-4" />
-            <span>{language === "hi" ? "परिचय सुनें" : "Listen Audio"}</span>
+            <span>{language === "hi" ? "सुनें" : "Listen"}</span>
           </button>
         </div>
 
@@ -176,15 +176,15 @@ export function LandingPageWorkspace() {
         <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 pt-4 text-xs text-muted-foreground font-medium">
           <span className="flex items-center gap-1">
             <ShieldCheck className="h-4 w-4 text-emerald-600" />
-            <span>{language === "hi" ? "100% सरकारी मान्यता प्राप्त आंकड़े" : "Verified Govt ITI & NSDC Data"}</span>
+            <span>{language === "hi" ? "सरकारी आईटीआई डेटा" : "Verified Govt ITI Data"}</span>
           </span>
           <span className="flex items-center gap-1">
             <IndianRupee className="h-4 w-4 text-emerald-600" />
-            <span>{language === "hi" ? "न्यूनतम फीस (₹1,500/वर्ष)" : "Low Cost Subsidized Fees"}</span>
+            <span>{language === "hi" ? "सटीक फीस व वेतन" : "Transparent Fees & Salary"}</span>
           </span>
           <span className="flex items-center gap-1">
             <PhoneCall className="h-4 w-4 text-emerald-600" />
-            <span>{language === "hi" ? "सीनियर काउंसलर कॉलबैक" : "Human Counsellor Bridge"}</span>
+            <span>{language === "hi" ? "काउंसलर सहायता" : "Counsellor Support"}</span>
           </span>
         </div>
       </section>
@@ -193,10 +193,10 @@ export function LandingPageWorkspace() {
       <section className="space-y-6">
         <div className="text-center space-y-1.5">
           <span className="text-xs font-bold text-primary uppercase tracking-wider">
-            {language === "hi" ? "सरल एवं स्पष्ट प्रक्रिया" : "Complete Connected Ecosystem"}
+            {language === "hi" ? "सरल प्रक्रिया" : "How It Works"}
           </span>
           <h2 className="text-2xl font-bold tracking-tight text-foreground">
-            {language === "hi" ? "करियर साथी कैसे काम करता है?" : "How CareerSaathi Empowers Households"}
+            {language === "hi" ? "करियर साथी की मुख्य विशेषताएं" : "Key Platform Features"}
           </h2>
         </div>
 

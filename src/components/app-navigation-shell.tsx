@@ -2,10 +2,29 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, Sparkles, Users, FileText } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Compass, Sparkles, Users, FileText, User as UserIcon, LogIn } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 export function AppNavigationShell() {
   const pathname = usePathname();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   // Hide global navigation on the full-screen video counselling call and clean onboarding screen
   if (pathname === "/counselling" || pathname === "/onboarding") {
@@ -97,16 +116,31 @@ export function AppNavigationShell() {
 
         {/* User state indicator */}
         <div className="flex items-center gap-2">
-          <Link
-            href="/profile"
-            className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition ${
-              pathname === "/profile"
-                ? "bg-primary text-primary-foreground border-primary"
-                : "border-border hover:bg-muted text-foreground"
-            }`}
-          >
-            ⚙️ Settings
-          </Link>
+          {user ? (
+            <Link
+              href="/profile"
+              className={`text-xs font-semibold px-3 py-1.5 rounded-xl border flex items-center gap-1.5 transition ${
+                pathname === "/profile"
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "border-border hover:bg-muted text-foreground"
+              }`}
+            >
+              <div className="h-4 w-4 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-[10px]">
+                {user.user_metadata?.full_name ? user.user_metadata.full_name[0].toUpperCase() : user.email?.[0].toUpperCase()}
+              </div>
+              <span className="max-w-[100px] truncate">
+                {user.user_metadata?.full_name || user.email?.split("@")[0]}
+              </span>
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="text-xs font-semibold px-3.5 py-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-1.5 transition shadow-xs"
+            >
+              <LogIn className="h-3.5 w-3.5" />
+              <span>लॉगिन / Login</span>
+            </Link>
+          )}
         </div>
       </header>
 

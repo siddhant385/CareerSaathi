@@ -1,6 +1,6 @@
-import { getCareerPaths } from "@/app/my-path/components/data";
-import type { CareerPath } from "@/app/my-path/components/types";
-import type { SupportedLanguage } from "@/app/onboarding/components/types";
+import { getCareerPaths } from "@/app/(learner)/my-path/components/data";
+import type { CareerPath } from "@/app/(learner)/my-path/components/types";
+import type { SupportedLanguage } from "@/app/(learner)/onboarding/components/types";
 
 const SELECTED_CAREER_KEY = "careersaathi_selected_career_id";
 
@@ -22,6 +22,6 @@ export function setSelectedCareerId(id: string): void {
 export function getSelectedCareer(lang: SupportedLanguage = "en"): CareerPath {
   const currentId = getSelectedCareerId();
   const allPaths = getCareerPaths(lang);
-  const found = allPaths.find((p) => p.id === currentId);
+  const found = allPaths.find((p: CareerPath) => p.id === currentId);
   return found || allPaths[0];
 }

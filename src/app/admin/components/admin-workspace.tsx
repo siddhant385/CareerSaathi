@@ -15,7 +15,7 @@ import type {
 import { getStoredLanguage } from "@/lib/profile-store";
 import { getStoredLiveEvents, type LiveActivityEvent } from "@/lib/activity-store";
 import { getSelectedCareer } from "@/lib/career-store";
-import type { SupportedLanguage } from "../../onboarding/components/types";
+import type { SupportedLanguage } from "@/app/(learner)/onboarding/components/types";
 import {
   Users,
   PhoneCall,

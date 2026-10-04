@@ -1,4 +1,4 @@
-import type { SupportedLanguage } from "@/app/onboarding/components/types";
+import type { SupportedLanguage } from "@/app/(learner)/onboarding/components/types";
 
 export interface UserProfile {
   language: SupportedLanguage;
