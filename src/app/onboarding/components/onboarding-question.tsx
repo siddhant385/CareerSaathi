@@ -127,48 +127,91 @@ export function OnboardingQuestion({
       )}
 
       {(step.type === "single" || step.type === "multi") && step.options && (
-        <div className="grid grid-cols-1 gap-2.5">
-          {step.options.map((option: ChoiceOption) => {
-            const isSelected =
-              step.type === "single"
-                ? value === option.id
-                : Array.isArray(value) && value.includes(option.id);
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-2.5">
+            {step.options.map((option: ChoiceOption) => {
+              const isSelected =
+                step.type === "single"
+                  ? (typeof value === "string" && value.startsWith(option.id)) ||
+                    (typeof value === "object" &&
+                      value !== null &&
+                      !Array.isArray(value) &&
+                      (value as { selected?: string }).selected === option.id) ||
+                    value === option.id
+                  : Array.isArray(value) && value.includes(option.id);
 
-            return (
-              <button
-                key={option.id}
-                type="button"
-                onClick={() =>
-                  step.type === "single"
-                    ? handleSingleSelect(option.id)
-                    : handleMultiSelect(option.id)
-                }
-                className={`w-full min-h-[52px] p-3.5 rounded-xl border text-left flex items-center justify-between gap-3 transition-all ${
-                  isSelected
-                    ? "border-primary bg-primary/5 font-medium ring-1 ring-primary"
-                    : "border-border hover:bg-muted/40"
-                }`}
-              >
-                <div className="space-y-0.5">
-                  <span className="text-sm block">{option.label}</span>
-                  {option.description && (
-                    <span className="text-xs text-muted-foreground block">
-                      {option.description}
-                    </span>
-                  )}
-                </div>
-                <div
-                  className={`h-5 w-5 rounded-full border flex items-center justify-center text-xs shrink-0 ${
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() =>
+                    step.type === "single"
+                      ? handleSingleSelect(option.id)
+                      : handleMultiSelect(option.id)
+                  }
+                  className={`w-full min-h-[52px] p-3.5 rounded-xl border text-left flex items-center justify-between gap-3 transition-all ${
                     isSelected
-                      ? "bg-primary border-primary text-primary-foreground"
-                      : "border-muted-foreground/30"
+                      ? "border-primary bg-primary/5 font-medium ring-1 ring-primary"
+                      : "border-border hover:bg-muted/40"
                   }`}
                 >
-                  {isSelected ? "✓" : ""}
-                </div>
-              </button>
-            );
-          })}
+                  <div className="space-y-0.5">
+                    <span className="text-sm block">{option.label}</span>
+                    {option.description && (
+                      <span className="text-xs text-muted-foreground block">
+                        {option.description}
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    className={`h-5 w-5 rounded-full border flex items-center justify-center text-xs shrink-0 ${
+                      isSelected
+                        ? "bg-primary border-primary text-primary-foreground"
+                        : "border-muted-foreground/30"
+                    }`}
+                  >
+                    {isSelected ? "✓" : ""}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* If user picked other or graduate in education, prompt for degree / prior background */}
+          {step.id === "education" &&
+            (value === "other" ||
+              value === "graduate" ||
+              (typeof value === "string" &&
+                (value.startsWith("other:") || value.startsWith("graduate:")))) && (
+              <div className="pt-2 animate-in fade-in slide-in-from-top-1 space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  {language === "hi"
+                    ? "कृपया अपनी डिग्री या पिछली पढ़ाई का नाम लिखें (उदा. BA, B.Sc, B.Com या अन्य):"
+                    : "Please specify your degree or past course (e.g. BA, B.Com, B.Sc or other):"}
+                </label>
+                <input
+                  type="text"
+                  placeholder={
+                    language === "hi"
+                      ? "उदा. BA राजनीति शास्त्र, या B.Com"
+                      : "e.g., BA Political Science, or B.Com"
+                  }
+                  value={
+                    typeof value === "string" && value.includes(":")
+                      ? value.split(":")[1]
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const prefix =
+                      typeof value === "string" && value.startsWith("graduate")
+                        ? "graduate"
+                        : "other";
+                    onChange(`${prefix}:${e.target.value}`);
+                  }}
+                  className="w-full h-11 px-3.5 rounded-xl border bg-background text-xs focus:outline-hidden focus:ring-2 focus:ring-ring transition"
+                />
+              </div>
+            )}
         </div>
       )}
     </div>
