@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
-import { getCareerPaths } from "../src/app/my-path/components/data.ts";
+import { getLocalFallbackPaths } from "../src/app/(learner)/my-path/components/data.ts";
 
-const pathsEn = getCareerPaths("en");
-const pathsHi = getCareerPaths("hi");
+const pathsEn = getLocalFallbackPaths("en");
+const pathsHi = getLocalFallbackPaths("hi");
 
 assert.equal(pathsEn.length, 6, "English career paths must have 6 realistic recommendations");
 assert.equal(pathsHi.length, 6, "Hindi career paths must have 6 realistic recommendations");

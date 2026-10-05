@@ -76,13 +76,48 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // 4. ROLE GUARD FOR /admin ROUTE: Only admin/counsellor role allowed
-  if (claims && pathname.startsWith("/admin")) {
+  // 4. ROLE GUARD & ONBOARDING CHECK FOR LOGGED-IN USERS
+  if (claims) {
     const role = (claims.app_metadata as { role?: string } | undefined)?.role || "learner";
-    if (role !== "admin" && role !== "counsellor") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/my-path";
-      return NextResponse.redirect(url);
+
+    // Admin/Counsellor guard: staff to /admin, learners blocked from /admin
+    if (pathname.startsWith("/admin")) {
+      if (role !== "admin" && role !== "counsellor") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/my-path";
+        return NextResponse.redirect(url);
+      }
+    }
+
+    // If a logged-in user visits /onboarding, verify if their profile is already completed
+    if (pathname === "/onboarding") {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("district, highest_qualification, interests, role")
+        .eq("id", claims.sub)
+        .maybeSingle();
+
+      if (profile) {
+        const isStaff = profile.role === "admin" || profile.role === "counsellor";
+        if (isStaff) {
+          const url = request.nextUrl.clone();
+          url.pathname = "/admin";
+          return NextResponse.redirect(url);
+        }
+
+        const isProfileComplete = Boolean(
+          profile.district &&
+          profile.highest_qualification &&
+          Array.isArray(profile.interests) &&
+          profile.interests.length > 0
+        );
+
+        if (isProfileComplete) {
+          const url = request.nextUrl.clone();
+          url.pathname = "/my-path";
+          return NextResponse.redirect(url);
+        }
+      }
     }
   }
 

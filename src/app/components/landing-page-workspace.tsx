@@ -147,14 +147,14 @@ export function LandingPageWorkspace() {
         {/* Audio Intro Button & Action CTAs */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           <Link
-            href="/onboarding"
+            href="/my-path"
             className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition shadow-md hover:shadow-lg cursor-pointer"
           >
             <span>{language === "hi" ? "करियर मार्गदर्शन शुरू करें →" : "Start Career Guidance →"}</span>
           </Link>
 
           <Link
-            href="/my-path"
+            href="/explore"
             className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-border bg-card hover:bg-muted text-foreground font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer"
           >
             <Compass className="h-4 w-4 text-primary" />
