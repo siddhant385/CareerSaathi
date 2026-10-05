@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { getAllTrades, type ExtendedTrade } from "./data";
+import { getAllTrades, fetchLiveExploreTrades, type ExtendedTrade } from "./data";
 import type { CareerCategory } from "../../my-path/components/types";
 import type { SupportedLanguage } from "../../onboarding/components/types";
 import { getStoredLanguage } from "@/lib/profile-store";
@@ -34,6 +34,7 @@ function ExploreContent() {
   const initialCategory = (searchParams.get("category") as CareerCategory) || "all";
 
   const [language, setLanguage] = useState<SupportedLanguage>("en");
+  const [tradesList, setTradesList] = useState<ExtendedTrade[]>(() => [...getAllTrades("en")]);
   const [selectedCareerId, setCareerIdState] = useState<string>("electrician");
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedCategory, setSelectedCategory] = useState<CareerCategory>(initialCategory);
@@ -44,10 +45,24 @@ function ExploreContent() {
   const gridTopRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setLanguage(getStoredLanguage());
+    const currentLang = getStoredLanguage();
+    setLanguage(currentLang);
     setCareerIdState(getSelectedCareerId());
 
-    const onLangChange = () => setLanguage(getStoredLanguage());
+    // Fetch live trade data from Supabase
+    fetchLiveExploreTrades(currentLang).then((trades) => {
+      if (trades.length > 0) {
+        setTradesList(trades);
+      }
+    });
+
+    const onLangChange = () => {
+      const newLang = getStoredLanguage();
+      setLanguage(newLang);
+      fetchLiveExploreTrades(newLang).then((trades) => {
+        if (trades.length > 0) setTradesList(trades);
+      });
+    };
     const onCareerChange = () => setCareerIdState(getSelectedCareerId());
 
     window.addEventListener("careersaathi_language_changed", onLangChange);
@@ -110,7 +125,7 @@ function ExploreContent() {
     }
   }
 
-  const allTrades = getAllTrades(language);
+  const allTrades = tradesList;
 
   const categories: { id: CareerCategory; labelEn: string; labelHi: string; icon: string }[] = [
     { id: "all", labelEn: "All Trades", labelHi: "सभी काम", icon: "✨" },

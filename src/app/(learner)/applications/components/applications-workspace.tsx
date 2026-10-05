@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { initialDocuments, admissionTimeline } from "./data";
+import { getAdmissionTimelinesAction } from "@/app/actions/trades";
 import type { SupportedLanguage } from "../../onboarding/components/types";
 import { getSelectedCareer } from "@/lib/career-store";
 import { getStoredLanguage } from "@/lib/profile-store";
@@ -21,11 +22,33 @@ export function ApplicationsWorkspace() {
   const [language, setLanguage] = useState<SupportedLanguage>("en");
   const [documents, setDocuments] = useState(initialDocuments);
   const [uploadedMsg, setUploadedMsg] = useState<string | null>(null);
+  const [timelineSteps, setTimelineSteps] = useState(admissionTimeline);
   const [activeCareer, setActiveCareer] = useState<CareerPath | null>(null);
 
   useEffect(() => {
     setLanguage(getStoredLanguage());
     setActiveCareer(getSelectedCareer(getStoredLanguage()));
+
+    // Fetch live state admission timeline
+    getAdmissionTimelinesAction("Bihar").then(({ timelines }) => {
+      if (timelines && timelines.length > 0) {
+        const liveSteps = timelines.map((t) => ({
+          stepNumber: t.step_number,
+          titleEn: t.title_en,
+          titleHi: t.title_hi,
+          dateRangeEn: t.date_label_en,
+          dateRangeHi: t.date_label_hi,
+          dateEn: t.date_label_en,
+          dateHi: t.date_label_hi,
+          status: (t.status === "active" ? "active" : t.status === "completed" ? "completed" : "upcoming") as "upcoming" | "active" | "completed",
+          actionEn: "Official Portal Notice",
+          actionHi: "आधिकारिक पोर्टल सूचना",
+          actionTextEn: "Portal Link",
+          actionTextHi: "पोर्टल लिंक",
+        }));
+        setTimelineSteps(liveSteps);
+      }
+    });
 
     const handleCareerChange = () => {
       setActiveCareer(getSelectedCareer(getStoredLanguage()));
@@ -255,7 +278,7 @@ export function ApplicationsWorkspace() {
         </h3>
 
         <div className="space-y-3">
-          {admissionTimeline.map((step) => {
+          {timelineSteps.map((step) => {
             const isActive = step.status === "active";
 
             return (

@@ -15,6 +15,8 @@ import type {
 import { getStoredLanguage } from "@/lib/profile-store";
 import { getStoredLiveEvents, type LiveActivityEvent } from "@/lib/activity-store";
 import { getSelectedCareer } from "@/lib/career-store";
+import { getAdminLeadsAction } from "@/app/actions/trades";
+import { updateLeadStatusAction } from "@/app/actions/leads";
 import type { SupportedLanguage } from "@/app/(learner)/onboarding/components/types";
 import {
   Users,
@@ -60,6 +62,45 @@ export function AdminWorkspace() {
     setLanguage(getStoredLanguage());
     setLiveEvents(getStoredLiveEvents());
 
+    // Fetch live leads from Supabase
+    getAdminLeadsAction().then(({ leads: liveLeads }) => {
+      if (liveLeads && liveLeads.length > 0) {
+        const formatted: FamilyCallbackLead[] = liveLeads.map((l) => {
+          const household = l.households;
+          const trade = l.vocational_trades;
+          const rawSentiment = l.sentiment_level;
+          const sentiment: SentimentLevel =
+            rawSentiment === "aligned"
+              ? "aligned"
+              : rawSentiment === "conflicted"
+              ? "conflicted"
+              : rawSentiment === "blocked"
+              ? "blocked"
+              : "hesitant";
+
+          return {
+            id: l.id,
+            studentName: "Student",
+            parentName: household?.parent_name || "Parent",
+            relation: (household?.parent_relation as "father" | "mother" | "guardian") || "father",
+            phone: l.parent_phone,
+            preferredDialect: l.preferred_dialect || "bhojpuri",
+            targetTrade: trade?.title_en || "Electrician",
+            govtFee: `₹${trade?.govt_annual_fee?.toLocaleString("en-IN") || "1,500"}`,
+            location: "Bihar",
+            sentimentLevel: sentiment,
+            primaryResistance: l.primary_resistance || "Fees and safety",
+            aiTranscriptSnippet: l.ai_transcript_snippet || "Looking for placement guarantee and safe workshop transport.",
+            requestedAt: new Date(l.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            status: (l.status === "resolved" ? "resolved" : l.status === "in_progress" ? "in_progress" : l.status === "follow_up_needed" ? "follow_up_needed" : "pending") as FamilyCallbackLead["status"],
+            counsellorNotes: l.counsellor_notes || "",
+          };
+        });
+        setLeads(formatted);
+        setSelectedLeadId(formatted[0].id);
+      }
+    });
+
     const onLangChange = () => setLanguage(getStoredLanguage());
     const onLiveEvent = () => setLiveEvents(getStoredLiveEvents());
 
@@ -81,7 +122,11 @@ export function AdminWorkspace() {
     }
   }, [selectedLeadId, leads]);
 
-  function handleSaveLeadCall() {
+  async function handleSaveLeadCall() {
+    if (selectedLeadId) {
+      await updateLeadStatusAction(selectedLeadId, callResolutionStatus, callNotes);
+    }
+
     setLeads((prev) =>
       prev.map((l) =>
         l.id === selectedLeadId

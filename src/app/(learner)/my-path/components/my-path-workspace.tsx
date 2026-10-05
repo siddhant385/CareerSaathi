@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getCareerPaths } from "./data";
-import type { CareerCategory } from "./types";
+import { fetchLiveCareerPaths, getLocalFallbackPaths } from "./data";
+import type { CareerPath, CareerCategory } from "./types";
 import type { SupportedLanguage } from "../../onboarding/components/types";
 import { CareerCard } from "./career-card";
 import { CompareDialog } from "./compare-dialog";
@@ -28,19 +28,38 @@ import {
 export function MyPathWorkspace() {
   const router = useRouter();
   const [language, setLanguage] = useState<SupportedLanguage>("en");
+  const [careerPaths, setCareerPaths] = useState<CareerPath[]>(() => getLocalFallbackPaths("en"));
+  const [loading, setLoading] = useState<boolean>(true);
   const [selectedCareerId, setCareerIdState] = useState<string>("electrician");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<CareerCategory>("all");
-  const [compareIds, setCompareIds] = useState<string[]>(["electrician", "auto_technician"]);
+  const [compareIds, setCompareIds] = useState<string[]>(["electrician", "auto_ev_mechanic"]);
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [isSaathiOpen, setIsSaathiOpen] = useState(false);
   const [matchPage, setMatchPage] = useState<number>(1);
 
   useEffect(() => {
-    setLanguage(getStoredLanguage());
+    const currentLang = getStoredLanguage();
+    setLanguage(currentLang);
     setCareerIdState(getSelectedCareerId());
 
-    const onLangChange = () => setLanguage(getStoredLanguage());
+    // Fetch live trade data from Supabase
+    fetchLiveCareerPaths(currentLang)
+      .then((paths) => {
+        if (paths.length > 0) {
+          setCareerPaths(paths);
+        }
+      })
+      .finally(() => setLoading(false));
+
+    const onLangChange = () => {
+      const newLang = getStoredLanguage();
+      setLanguage(newLang);
+      fetchLiveCareerPaths(newLang).then((paths) => {
+        if (paths.length > 0) setCareerPaths(paths);
+      });
+    };
+
     window.addEventListener("careersaathi_language_changed", onLangChange);
     return () => window.removeEventListener("careersaathi_language_changed", onLangChange);
   }, []);
@@ -48,7 +67,7 @@ export function MyPathWorkspace() {
   function handleSelectCareer(id: string) {
     setSelectedCareerId(id);
     setCareerIdState(id);
-    const chosen = allCareerPaths.find((p) => p.id === id);
+    const chosen = careerPaths.find((p) => p.id === id);
     if (chosen) {
       recordLiveEvent({
         type: "trade_selected",
@@ -77,7 +96,7 @@ export function MyPathWorkspace() {
     { id: "craft", labelEn: "Tailoring & Craft", labelHi: "सिलाई / हस्तकला", icon: "🧵" },
   ];
 
-  const allCareerPaths = getCareerPaths(language);
+  const allCareerPaths = careerPaths;
   const currentActiveCareer =
     allCareerPaths.find((p) => p.id === selectedCareerId) || allCareerPaths[0];
 

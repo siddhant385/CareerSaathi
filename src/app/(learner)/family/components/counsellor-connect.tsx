@@ -3,6 +3,8 @@
 import { useState } from "react";
 import type { CounsellorProfile } from "./types";
 import { recordLiveEvent } from "@/lib/activity-store";
+import { requestCallbackAction } from "@/app/actions/leads";
+import { getSelectedCareer } from "@/lib/career-store";
 import type { SupportedLanguage } from "../../onboarding/components/types";
 import {
   MessageCircle,
@@ -27,15 +29,26 @@ export function CounsellorConnect({ counsellors, language }: CounsellorConnectPr
   const activeCounsellor =
     counsellors.find((c) => c.id === selectedCounsellor) || counsellors[0];
 
-  function handleBookCallback(e: React.FormEvent) {
+  async function handleBookCallback(e: React.FormEvent) {
     e.preventDefault();
     if (parentPhone.trim().length >= 10) {
       setIsBooked(true);
+      const activeCareer = getSelectedCareer(language);
+
+      await requestCallbackAction({
+        parentName: "Parent",
+        parentPhone: parentPhone.trim(),
+        preferredDialect: language === "hi" ? "bhojpuri" : "hindi",
+        targetTradeId: activeCareer?.id || "electrician",
+        preferredTimeSlot: preferredTime,
+        primaryResistance: `Counsellor: ${activeCounsellor.name}`,
+      });
+
       recordLiveEvent({
         type: "callback_requested",
         studentName: "Student Family",
         location: "Patna / Bihar",
-        tradeTitle: "Selected ITI Trade",
+        tradeTitle: activeCareer?.title || "Selected ITI Trade",
         details: `Parent Phone: ${parentPhone}, Slot: ${preferredTime}, Counsellor: ${activeCounsellor.name}`,
       });
     }
