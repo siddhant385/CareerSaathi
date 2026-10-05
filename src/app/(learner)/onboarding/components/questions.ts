@@ -20,10 +20,10 @@ export function getOnboardingSteps(
       {
         id: "basics",
         label: "मूल जानकारी",
-        question: "आपका नाम और वर्तमान स्थान क्या है?",
+        question: "आपका पूरा नाम और गृह जिला क्या है?",
         whyExplanation: "यह जानने के लिए कि आपके जिले या कस्बे के पास कौन से प्रशिक्षण केंद्र हैं।",
-        type: "text",
-        listenText: "अपना नाम और अपना शहर या गाँव दर्ज करें।",
+        type: "basics",
+        listenText: "अपना नाम और अपना जिला दर्ज करें।",
       },
       {
         id: "education",
@@ -134,10 +134,10 @@ export function getOnboardingSteps(
     {
       id: "basics",
       label: "Basic Details",
-      question: "What is your name and current location?",
+      question: "What is your full name and home district?",
       whyExplanation: "This helps find verified training institutes near your town or district.",
-      type: "text",
-      listenText: "Enter your name and your city or district.",
+      type: "basics",
+      listenText: "Enter your full name and district.",
     },
     {
       id: "education",

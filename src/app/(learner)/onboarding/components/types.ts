@@ -8,10 +8,14 @@ export type StepId =
   | "workPreferences"
   | "goals"
   | "resume"
-  | "portals"
-  | "review";
+  | "portals";
 
-export type OnboardingAnswer = string | string[] | null;
+export interface BasicsAnswer {
+  fullName: string;
+  district: string;
+}
+
+export type OnboardingAnswer = string | string[] | BasicsAnswer | null;
 
 export interface ChoiceOption {
   id: string;
@@ -25,7 +29,7 @@ export interface OnboardingStep {
   label: string;
   question: string;
   whyExplanation: string;
-  type: "single" | "multi" | "text" | "upload" | "review";
+  type: "single" | "multi" | "text" | "upload" | "basics";
   options?: ChoiceOption[];
   isOptional?: boolean;
   maxSelections?: number;

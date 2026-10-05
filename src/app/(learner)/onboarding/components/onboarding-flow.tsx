@@ -2,29 +2,33 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { getOnboardingSteps } from "./questions";
 import { translations } from "./i18n";
-import type { OnboardingAnswer, SupportedLanguage } from "./types";
+import type { OnboardingAnswer, SupportedLanguage, BasicsAnswer } from "./types";
 import { OnboardingProgress } from "./onboarding-progress";
 import { OnboardingQuestion } from "./onboarding-question";
 import { LanguageSelector } from "./language-selector";
 import { SaathiHelpSheet } from "./saathi-help-sheet";
 import { Button } from "@/components/ui/button";
-import { Sparkles, ArrowLeft, ArrowRight } from "lucide-react";
+import { Sparkles, ArrowLeft, ArrowRight, FastForward } from "lucide-react";
 import { getStoredProfile, saveStoredProfile } from "@/lib/profile-store";
 import { saveLearnerProfileAction } from "@/app/actions/profile";
 import type { Database } from "@/lib/supabase/database.types";
 
 
 export function OnboardingFlow() {
+  const router = useRouter();
   const [language, setLanguage] = useState<SupportedLanguage>("en");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, OnboardingAnswer>>({
     language: "en",
+    basics: { fullName: "", district: "" },
   });
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const t = translations[language];
   const steps = getOnboardingSteps(language);
@@ -46,51 +50,84 @@ export function OnboardingFlow() {
 
   const isAnswerValid = Boolean(
     currentStep?.isOptional ||
-      (currentStep?.type === "multi"
+      (currentStep?.type === "basics"
+        ? typeof currentAnswer === "object" &&
+          currentAnswer !== null &&
+          !Array.isArray(currentAnswer) &&
+          Boolean((currentAnswer as BasicsAnswer).fullName?.trim()) &&
+          Boolean((currentAnswer as BasicsAnswer).district?.trim())
+        : currentStep?.type === "multi"
         ? Array.isArray(currentAnswer) && currentAnswer.length > 0
         : currentAnswer !== null && currentAnswer !== ""),
   );
+
+  // Check if mandatory core steps (Language, Basics, Education, Interests) are answered
+  const hasCompletedMandatoryCore = Boolean(
+    answers.language &&
+      typeof answers.basics === "object" &&
+      answers.basics !== null &&
+      !Array.isArray(answers.basics) &&
+      (answers.basics as BasicsAnswer).fullName?.trim() &&
+      (answers.basics as BasicsAnswer).district?.trim() &&
+      answers.education &&
+      Array.isArray(answers.interests) &&
+      answers.interests.length > 0
+  );
+
+  async function persistAndComplete(redirectToMyPath = false) {
+    setIsSubmitting(true);
+    const existing = getStoredProfile();
+    const basics = typeof answers.basics === "object" && answers.basics !== null && !Array.isArray(answers.basics)
+      ? (answers.basics as BasicsAnswer)
+      : { fullName: existing.name || "Learner", district: existing.location || "Bihar" };
+
+    const updatedProfile = {
+      ...existing,
+      name: basics.fullName || existing.name,
+      location: basics.district ? `${basics.district}, Bihar` : existing.location,
+      education: (answers.education as string) || existing.education,
+      interests: Array.isArray(answers.interests)
+        ? (answers.interests as string[])
+        : existing.interests,
+      workPreference: (answers.workPreferences as string) || (answers.workPreference as string) || existing.workPreference,
+      goal: (answers.goals as string) || (answers.goal as string) || existing.goal,
+      language,
+    };
+
+    saveStoredProfile(updatedProfile);
+
+    const qualMap: Record<string, Database["public"]["Enums"]["qualification_level"]> = {
+      class_8: "class_8",
+      class_10: "class_10",
+      class_12: "class_12",
+      iti_diploma: "iti_diploma",
+      graduate: "graduate",
+      other: "other",
+    };
+
+    await saveLearnerProfileAction({
+      fullName: basics.fullName,
+      highestQualification: qualMap[answers.education as string] || "class_10",
+      preferredLanguage: language,
+      district: basics.district,
+      state: "Bihar",
+      goal: typeof answers.goals === "string" ? answers.goals : typeof answers.goal === "string" ? answers.goal : undefined,
+      workPreference: typeof answers.workPreferences === "string" ? answers.workPreferences : undefined,
+    });
+
+    setIsSubmitting(false);
+    if (redirectToMyPath) {
+      router.push("/my-path");
+    } else {
+      setIsCompleted(true);
+    }
+  }
 
   async function goNext() {
     if (currentIndex < steps.length - 1) {
       setCurrentIndex((prev) => prev + 1);
     } else {
-      // Sync completed onboarding answers with local storage profile & state
-      const existing = getStoredProfile();
-      const updatedProfile = {
-        ...existing,
-        location: (answers.basics as string) || (answers.location as string) || existing.location,
-        education: (answers.education as string) || existing.education,
-        interests: Array.isArray(answers.interests)
-          ? (answers.interests as string[])
-          : existing.interests,
-        workPreference: (answers.workPreferences as string) || (answers.workPreference as string) || existing.workPreference,
-        goal: (answers.goal as string) || existing.goal,
-      };
-
-      saveStoredProfile(updatedProfile);
-
-      // Persist directly to Supabase profiles table via Server Action
-      const qualMap: Record<string, Database["public"]["Enums"]["qualification_level"]> = {
-        class_8: "class_8",
-        class_10: "class_10",
-        class_12: "class_12",
-        iti_diploma: "iti_diploma",
-        graduate: "graduate",
-        other: "other",
-      };
-
-      await saveLearnerProfileAction({
-        fullName: typeof answers.basics === "string" ? answers.basics.split(",")[0]?.trim() : undefined,
-        highestQualification: qualMap[answers.education as string] || "class_10",
-        preferredLanguage: language,
-        district: typeof answers.basics === "string" ? answers.basics.split(",")[1]?.trim() : undefined,
-        state: "Bihar",
-        goal: typeof answers.goal === "string" ? answers.goal : undefined,
-        workPreference: typeof answers.workPreferences === "string" ? answers.workPreferences : undefined,
-      });
-
-      setIsCompleted(true);
+      await persistAndComplete(false);
     }
   }
 
@@ -146,6 +183,18 @@ export function OnboardingFlow() {
           </span>
         </div>
         <div className="flex items-center gap-3">
+          {hasCompletedMandatoryCore && currentIndex >= 3 && (
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={() => persistAndComplete(true)}
+              className="text-xs font-bold px-3 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 flex items-center gap-1 transition cursor-pointer"
+            >
+              <FastForward className="h-3.5 w-3.5" />
+              <span>{language === "hi" ? "सीधे कोर्स देखें" : "Skip to My Path"}</span>
+            </button>
+          )}
+
           <LanguageSelector
             language={language}
             onSelect={handleLanguageChange}
@@ -210,6 +259,17 @@ export function OnboardingFlow() {
         </Button>
 
         <div className="flex items-center gap-2">
+          {hasCompletedMandatoryCore && currentStep?.isOptional && (
+            <Button
+              variant="outline"
+              onClick={() => persistAndComplete(true)}
+              className="h-11 text-xs text-emerald-700 border-emerald-300 hover:bg-emerald-50 gap-1 font-semibold"
+            >
+              <FastForward className="h-3.5 w-3.5" />
+              <span>{language === "hi" ? "कोर्स देखें" : "Skip to My Path"}</span>
+            </Button>
+          )}
+
           {currentStep?.isOptional && !currentAnswer && (
             <Button
               variant="ghost"
@@ -222,7 +282,7 @@ export function OnboardingFlow() {
 
           <Button
             onClick={goNext}
-            disabled={!isAnswerValid}
+            disabled={!isAnswerValid || isSubmitting}
             className="h-11 px-5 text-xs font-semibold gap-1.5"
           >
             <span>{t.continue}</span>

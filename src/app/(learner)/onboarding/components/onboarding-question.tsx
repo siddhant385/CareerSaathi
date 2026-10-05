@@ -5,6 +5,7 @@ import type {
   OnboardingAnswer,
   OnboardingStep,
   SupportedLanguage,
+  BasicsAnswer,
 } from "./types";
 import { translations } from "./i18n";
 import { Volume2 } from "lucide-react";
@@ -84,6 +85,42 @@ export function OnboardingQuestion({
           </p>
         )}
       </div>
+
+      {step.type === "basics" && (
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs font-semibold text-foreground block mb-1">
+              {language === "hi" ? "आपका पूरा नाम" : "Full Name"}
+            </label>
+            <input
+              type="text"
+              placeholder={language === "hi" ? "उदा. राहुल कुमार" : "e.g., Rahul Kumar"}
+              value={typeof value === "object" && value && !Array.isArray(value) ? (value as BasicsAnswer).fullName || "" : ""}
+              onChange={(e) => {
+                const prev = typeof value === "object" && value && !Array.isArray(value) ? (value as BasicsAnswer) : { fullName: "", district: "" };
+                onChange({ ...prev, fullName: e.target.value });
+              }}
+              className="w-full h-12 px-4 rounded-xl border bg-background text-sm focus:outline-hidden focus:ring-2 focus:ring-ring transition"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-foreground block mb-1">
+              {language === "hi" ? "गृह जिला (District)" : "Home District"}
+            </label>
+            <input
+              type="text"
+              placeholder={language === "hi" ? "उदा. पटना, गया, मुजफ्फरपुर" : "e.g., Patna, Gaya, Muzaffarpur"}
+              value={typeof value === "object" && value && !Array.isArray(value) ? (value as BasicsAnswer).district || "" : ""}
+              onChange={(e) => {
+                const prev = typeof value === "object" && value && !Array.isArray(value) ? (value as BasicsAnswer) : { fullName: "", district: "" };
+                onChange({ ...prev, district: e.target.value });
+              }}
+              className="w-full h-12 px-4 rounded-xl border bg-background text-sm focus:outline-hidden focus:ring-2 focus:ring-ring transition"
+            />
+          </div>
+        </div>
+      )}
 
       {step.type === "text" && (
         <div className="space-y-3">
