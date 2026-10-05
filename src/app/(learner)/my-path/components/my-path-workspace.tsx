@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { fetchLiveCareerPaths, getLocalFallbackPaths } from "./data";
+import { getLocalFallbackPaths } from "./data";
+import { getRecommendedTradesAction } from "@/app/actions/trades";
 import type { CareerPath, CareerCategory } from "./types";
 import type { SupportedLanguage } from "../../onboarding/components/types";
 import { CareerCard } from "./career-card";
@@ -11,7 +12,7 @@ import { CompareDialog } from "./compare-dialog";
 import { SaathiHelpSheet } from "../../onboarding/components/saathi-help-sheet";
 import { getSelectedCareerId, setSelectedCareerId } from "@/lib/career-store";
 import { recordLiveEvent } from "@/lib/activity-store";
-import { getStoredLanguage } from "@/lib/profile-store";
+import { getStoredLanguage, getStoredProfile } from "@/lib/profile-store";
 import {
   Sparkles,
   Users,
@@ -40,23 +41,53 @@ export function MyPathWorkspace() {
 
   useEffect(() => {
     const currentLang = getStoredLanguage();
+    const profile = getStoredProfile();
     setLanguage(currentLang);
     setCareerIdState(getSelectedCareerId());
 
-    // Fetch live trade data from Supabase
-    fetchLiveCareerPaths(currentLang)
-      .then((paths) => {
-        if (paths.length > 0) {
-          setCareerPaths(paths);
+    // Clean district name (e.g. "Patna, Bihar" -> "Patna")
+    const cleanDistrict = profile.location ? profile.location.split(",")[0].trim() : "Patna";
+
+    // Fetch live trade recommendations scored directly in Supabase DB
+    getRecommendedTradesAction({
+      qualification: profile.education || "class_10",
+      district: cleanDistrict,
+      interests: profile.interests || ["electrical", "auto"],
+      goal: profile.goal || "fast_earning",
+      workPreference: profile.workPreference || "near_home",
+      language: currentLang,
+    })
+      .then((res) => {
+        if (res.recommendations && res.recommendations.length > 0) {
+          setCareerPaths(res.recommendations);
+        } else {
+          setCareerPaths(getLocalFallbackPaths(currentLang));
         }
+      })
+      .catch(() => {
+        setCareerPaths(getLocalFallbackPaths(currentLang));
       })
       .finally(() => setLoading(false));
 
     const onLangChange = () => {
       const newLang = getStoredLanguage();
+      const p = getStoredProfile();
       setLanguage(newLang);
-      fetchLiveCareerPaths(newLang).then((paths) => {
-        if (paths.length > 0) setCareerPaths(paths);
+      const d = p.location ? p.location.split(",")[0].trim() : "Patna";
+
+      getRecommendedTradesAction({
+        qualification: p.education || "class_10",
+        district: d,
+        interests: p.interests || ["electrical", "auto"],
+        goal: p.goal || "fast_earning",
+        workPreference: p.workPreference || "near_home",
+        language: newLang,
+      }).then((res) => {
+        if (res.recommendations && res.recommendations.length > 0) {
+          setCareerPaths(res.recommendations);
+        } else {
+          setCareerPaths(getLocalFallbackPaths(newLang));
+        }
       });
     };
 

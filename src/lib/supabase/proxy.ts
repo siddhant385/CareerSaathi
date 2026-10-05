@@ -45,11 +45,15 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // 1. PUBLIC ROUTES (Landing page, auth routes, password reset, and public assets)
+  // Note: Allow /family if accessing via a zero-auth parent token (?token=...)
+  const hasFamilyToken = pathname.startsWith("/family") && Boolean(request.nextUrl.searchParams.get("token"));
+
   const isPublicRoute =
     pathname === "/" ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/reset-password") ||
-    pathname.startsWith("/api/auth");
+    pathname.startsWith("/api/auth") ||
+    hasFamilyToken;
 
   // 2. UNLOGGED-IN USERS: Must sign in for everything else (onboarding, my-path, counselling, etc.)
   if (!claims && !isPublicRoute) {

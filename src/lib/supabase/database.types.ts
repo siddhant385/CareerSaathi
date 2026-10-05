@@ -564,6 +564,43 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_learner_recommendations: {
+        Args: {
+          p_district?: string
+          p_goal?: string
+          p_interests?: string[]
+          p_qualification?: Database["public"]["Enums"]["qualification_level"]
+          p_user_id?: string
+          p_work_pref?: string
+        }
+        Returns: {
+          category: Database["public"]["Enums"]["trade_category"]
+          description_en: string
+          description_hi: string
+          duration_months: number
+          govt_annual_fee: number
+          id: string
+          is_local_district: boolean
+          key_skills: string[]
+          match_score: number
+          nearest_bus_route_en: string
+          nearest_bus_route_hi: string
+          nearest_center_name: string
+          nearest_distance_km: number
+          pay_growth_2yr_en: string
+          pay_growth_2yr_hi: string
+          private_annual_fee: number
+          safety_rating_en: string
+          safety_rating_hi: string
+          starting_monthly_pay_max: number
+          starting_monthly_pay_min: number
+          title_en: string
+          title_hi: string
+          verified_centres_count: number
+          why_fit_en: string
+          why_fit_hi: string
+        }[]
+      }
       is_staff: { Args: never; Returns: boolean }
     }
     Enums: {
