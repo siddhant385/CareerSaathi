@@ -12,6 +12,8 @@ import { SaathiHelpSheet } from "./saathi-help-sheet";
 import { Button } from "@/components/ui/button";
 import { Sparkles, ArrowLeft, ArrowRight } from "lucide-react";
 import { getStoredProfile, saveStoredProfile } from "@/lib/profile-store";
+import { saveLearnerProfileAction } from "@/app/actions/profile";
+import type { Database } from "@/lib/supabase/database.types";
 
 
 export function OnboardingFlow() {
@@ -49,22 +51,45 @@ export function OnboardingFlow() {
         : currentAnswer !== null && currentAnswer !== ""),
   );
 
-  function goNext() {
+  async function goNext() {
     if (currentIndex < steps.length - 1) {
       setCurrentIndex((prev) => prev + 1);
     } else {
       // Sync completed onboarding answers with local storage profile & state
       const existing = getStoredProfile();
-      saveStoredProfile({
+      const updatedProfile = {
         ...existing,
-        location: (answers.location as string) || existing.location,
+        location: (answers.basics as string) || (answers.location as string) || existing.location,
         education: (answers.education as string) || existing.education,
         interests: Array.isArray(answers.interests)
           ? (answers.interests as string[])
           : existing.interests,
-        workPreference: (answers.workPreference as string) || existing.workPreference,
+        workPreference: (answers.workPreferences as string) || (answers.workPreference as string) || existing.workPreference,
         goal: (answers.goal as string) || existing.goal,
+      };
+
+      saveStoredProfile(updatedProfile);
+
+      // Persist directly to Supabase profiles table via Server Action
+      const qualMap: Record<string, Database["public"]["Enums"]["qualification_level"]> = {
+        class_8: "class_8",
+        class_10: "class_10",
+        class_12: "class_12",
+        iti_diploma: "iti_diploma",
+        graduate: "graduate",
+        other: "other",
+      };
+
+      await saveLearnerProfileAction({
+        fullName: typeof answers.basics === "string" ? answers.basics.split(",")[0]?.trim() : undefined,
+        highestQualification: qualMap[answers.education as string] || "class_10",
+        preferredLanguage: language,
+        district: typeof answers.basics === "string" ? answers.basics.split(",")[1]?.trim() : undefined,
+        state: "Bihar",
+        goal: typeof answers.goal === "string" ? answers.goal : undefined,
+        workPreference: typeof answers.workPreferences === "string" ? answers.workPreferences : undefined,
       });
+
       setIsCompleted(true);
     }
   }

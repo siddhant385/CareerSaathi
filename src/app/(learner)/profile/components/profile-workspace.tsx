@@ -31,6 +31,7 @@ import {
   KeyRound,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { getLearnerProfileAction, saveLearnerProfileAction } from "@/app/actions/profile";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 export function ProfileWorkspace() {
@@ -46,8 +47,21 @@ export function ProfileWorkspace() {
     const onProfileChange = () => setProfile(getStoredProfile());
     window.addEventListener("careersaathi_profile_changed", onProfileChange);
 
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setAuthUser(user);
+    // Fetch live profile from Supabase
+    getLearnerProfileAction().then(({ profile: dbProfile }) => {
+      if (dbProfile) {
+        setProfile((prev) => ({
+          ...prev,
+          name: dbProfile.full_name || prev.name,
+          phone: dbProfile.phone || prev.phone,
+          location: dbProfile.district ? `${dbProfile.district}, ${dbProfile.state || "Bihar"}` : prev.location,
+          education: dbProfile.highest_qualification || prev.education,
+          interests: dbProfile.interests && dbProfile.interests.length > 0 ? dbProfile.interests : prev.interests,
+          goal: dbProfile.goal || prev.goal,
+          workPreference: dbProfile.work_preference || prev.workPreference,
+          language: (dbProfile.preferred_language as SupportedLanguage) || prev.language,
+        }));
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -85,8 +99,19 @@ export function ProfileWorkspace() {
   }
 
   function handleSave() {
-    startTransition(() => {
+    startTransition(async () => {
       saveStoredProfile(profile);
+
+      // Persist updates to Supabase profiles table
+      await saveLearnerProfileAction({
+        fullName: profile.name,
+        phone: profile.phone,
+        highestQualification: profile.education as any,
+        preferredLanguage: profile.language,
+        goal: profile.goal,
+        workPreference: profile.workPreference,
+      });
+
       setSavedAlert(true);
       setTimeout(() => setSavedAlert(false), 3000);
     });
