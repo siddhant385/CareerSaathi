@@ -22,12 +22,12 @@ const LANGUAGE_STORAGE_KEY = "careersaathi_language";
 
 export const initialProfile: UserProfile = {
   language: "en",
-  name: "Rahul Kumar",
-  location: "Patna, Bihar",
-  phone: "+91 98765 43210",
+  name: "",
+  location: "",
+  phone: "",
   education: "class_10",
   degreeDetail: "",
-  interests: ["electrical", "machines", "vehicles"],
+  interests: [],
   workPreference: "near_home",
   goal: "fast_earning",
   hasResume: false,

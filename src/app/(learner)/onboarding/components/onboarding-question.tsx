@@ -97,8 +97,26 @@ export function OnboardingQuestion({
               placeholder={language === "hi" ? "उदा. राहुल कुमार" : "e.g., Rahul Kumar"}
               value={typeof value === "object" && value && !Array.isArray(value) ? (value as BasicsAnswer).fullName || "" : ""}
               onChange={(e) => {
-                const prev = typeof value === "object" && value && !Array.isArray(value) ? (value as BasicsAnswer) : { fullName: "", district: "" };
+                const prev = typeof value === "object" && value && !Array.isArray(value) ? (value as BasicsAnswer) : { fullName: "", phone: "", district: "" };
                 onChange({ ...prev, fullName: e.target.value });
+              }}
+              className="w-full h-12 px-4 rounded-xl border bg-background text-sm focus:outline-hidden focus:ring-2 focus:ring-ring transition"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-foreground block mb-1">
+              {language === "hi" ? "मोबाइल नंबर (10 अंक)" : "Mobile Number (10 digits)"}
+            </label>
+            <input
+              type="tel"
+              maxLength={10}
+              placeholder={language === "hi" ? "9876543210" : "9876543210"}
+              value={typeof value === "object" && value && !Array.isArray(value) ? (value as BasicsAnswer).phone || "" : ""}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/\D/g, "");
+                const prev = typeof value === "object" && value && !Array.isArray(value) ? (value as BasicsAnswer) : { fullName: "", phone: "", district: "" };
+                onChange({ ...prev, phone: digits });
               }}
               className="w-full h-12 px-4 rounded-xl border bg-background text-sm focus:outline-hidden focus:ring-2 focus:ring-ring transition"
             />
@@ -113,7 +131,7 @@ export function OnboardingQuestion({
               placeholder={language === "hi" ? "उदा. पटना, गया, मुजफ्फरपुर" : "e.g., Patna, Gaya, Muzaffarpur"}
               value={typeof value === "object" && value && !Array.isArray(value) ? (value as BasicsAnswer).district || "" : ""}
               onChange={(e) => {
-                const prev = typeof value === "object" && value && !Array.isArray(value) ? (value as BasicsAnswer) : { fullName: "", district: "" };
+                const prev = typeof value === "object" && value && !Array.isArray(value) ? (value as BasicsAnswer) : { fullName: "", phone: "", district: "" };
                 onChange({ ...prev, district: e.target.value });
               }}
               className="w-full h-12 px-4 rounded-xl border bg-background text-sm focus:outline-hidden focus:ring-2 focus:ring-ring transition"

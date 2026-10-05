@@ -23,7 +23,7 @@ export function OnboardingFlow() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, OnboardingAnswer>>({
     language: "en",
-    basics: { fullName: "", district: "" },
+    basics: { fullName: "", phone: "", district: "" },
   });
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
@@ -55,6 +55,7 @@ export function OnboardingFlow() {
           currentAnswer !== null &&
           !Array.isArray(currentAnswer) &&
           Boolean((currentAnswer as BasicsAnswer).fullName?.trim()) &&
+          Boolean((currentAnswer as BasicsAnswer).phone?.trim().length >= 10) &&
           Boolean((currentAnswer as BasicsAnswer).district?.trim())
         : currentStep?.type === "multi"
         ? Array.isArray(currentAnswer) && currentAnswer.length > 0
@@ -68,6 +69,7 @@ export function OnboardingFlow() {
       answers.basics !== null &&
       !Array.isArray(answers.basics) &&
       (answers.basics as BasicsAnswer).fullName?.trim() &&
+      (answers.basics as BasicsAnswer).phone?.trim().length >= 10 &&
       (answers.basics as BasicsAnswer).district?.trim() &&
       answers.education &&
       Array.isArray(answers.interests) &&
@@ -79,11 +81,12 @@ export function OnboardingFlow() {
     const existing = getStoredProfile();
     const basics = typeof answers.basics === "object" && answers.basics !== null && !Array.isArray(answers.basics)
       ? (answers.basics as BasicsAnswer)
-      : { fullName: existing.name || "Learner", district: existing.location || "Bihar" };
+      : { fullName: existing.name || "Learner", phone: existing.phone || "", district: existing.location || "Bihar" };
 
     const updatedProfile = {
       ...existing,
       name: basics.fullName || existing.name,
+      phone: basics.phone || existing.phone,
       location: basics.district ? `${basics.district}, Bihar` : existing.location,
       education: (answers.education as string) || existing.education,
       interests: Array.isArray(answers.interests)
@@ -107,6 +110,7 @@ export function OnboardingFlow() {
 
     await saveLearnerProfileAction({
       fullName: basics.fullName,
+      phone: basics.phone,
       highestQualification: qualMap[answers.education as string] || "class_10",
       preferredLanguage: language,
       district: basics.district,

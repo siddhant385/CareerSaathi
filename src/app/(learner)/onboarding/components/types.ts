@@ -12,6 +12,7 @@ export type StepId =
 
 export interface BasicsAnswer {
   fullName: string;
+  phone: string;
   district: string;
 }
 
